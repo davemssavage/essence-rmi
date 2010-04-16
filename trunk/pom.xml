@@ -9,7 +9,7 @@
     <name>RMI and DataSocket API</name>
     <packaging>bundle</packaging>
     <inceptionYear>2008</inceptionYear>
-    <url>http://www.freshvanilla.org:8080/display/essence/Essence+Remote+Method+Invocation</url>
+    <url>http://code.google.com/p/essence-rmi/</url>
 
     <properties>
         <!-- globals -->
