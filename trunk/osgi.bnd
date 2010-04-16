@@ -1,0 +1,6 @@
+#-----------------------------------------------------------------
+# Use this file to add customized Bnd instructions for the bundle
+#-----------------------------------------------------------------
+
+Bundle-RequiredExecutionEnvironment: J2SE-1.5,JavaSE-1.6
+
