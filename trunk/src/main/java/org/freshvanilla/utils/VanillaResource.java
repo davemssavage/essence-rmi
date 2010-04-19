@@ -48,7 +48,7 @@ public class VanillaResource implements SimpleResource {
     protected void finalize() throws Throwable {
         try {
             if (!closed) {
-                getLog().warn(name + ": Discard resource " + getClass().getName() + " was not closed!");
+                getLog().warn("'" + name + "' was not closed!");
                 close();
             }
         }
