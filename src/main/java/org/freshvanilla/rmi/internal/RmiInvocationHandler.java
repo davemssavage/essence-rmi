@@ -49,6 +49,16 @@ public class RmiInvocationHandler implements InvocationHandler {
         this.closeFactory = closeFactory;
     }
 
+    @Override
+    protected void finalize() throws Throwable {
+        try {
+            close();
+        }
+        finally {
+            super.finalize();
+        }
+    }
+
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
         if (args == null || args.length == 0) {
             final String methodName = method.getName();
