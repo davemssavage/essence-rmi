@@ -23,7 +23,6 @@ import java.util.Set;
 
 import org.freshvanilla.net.CachedDataSocketFactory;
 import org.freshvanilla.net.DataSocket;
-import org.freshvanilla.rmi.internal.RmiInvocationHandler;
 import org.freshvanilla.utils.Factory;
 import org.freshvanilla.utils.SimpleResource;
 
