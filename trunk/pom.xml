@@ -85,8 +85,8 @@
                 <configuration>
                     <instructions>
                         <Bundle-SymbolicName>${bundle.symbolicName}</Bundle-SymbolicName>
-                        <Bundle-Version>${pom.version}</Bundle-Version>
-                        <Export-Package>${bundle.namespace}.*;version="${pom.version}"</Export-Package>
+                        <Bundle-Version>${project.version}</Bundle-Version>
+                        <Export-Package>${bundle.namespace}.*;version="${project.version}"</Export-Package>
                         <_include>-osgi.bnd</_include>
                     </instructions>
                 </configuration>
