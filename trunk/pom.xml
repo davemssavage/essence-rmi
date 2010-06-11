@@ -84,6 +84,7 @@
                 <configuration>
                     <instructions>
                         <Bundle-RequiredExecutionEnvironment>J2SE-1.5,JavaSE-1.6</Bundle-RequiredExecutionEnvironment>
+                        <DynamicImport-Package>*</DynamicImport-Package>
                         <Export-Package>${bundle.namespace}.*;version="${project.version}"</Export-Package>
                     </instructions>
                 </configuration>
