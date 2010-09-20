@@ -16,7 +16,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <!-- plugins -->
         <bundle.plugin.version>2.1.0</bundle.plugin.version>
-        <compiler.plugin.version>2.3</compiler.plugin.version>
+        <compiler.plugin.version>2.3.2</compiler.plugin.version>
         <eclipse.plugin.version>2.8</eclipse.plugin.version>
         <source.plugin.version>2.1.1</source.plugin.version>
         <surefire.plugin.version>2.5</surefire.plugin.version>
