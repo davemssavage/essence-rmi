@@ -13,8 +13,10 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
+
 package org.freshvanilla.rmi;
 
+import java.io.Closeable;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
@@ -35,7 +37,7 @@ import org.freshvanilla.utils.Factory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class RmiInvocationHandler implements InvocationHandler {
+public class RmiInvocationHandler implements InvocationHandler, Closeable {
 
     private static final Logger LOG = LoggerFactory.getLogger(RmiInvocationHandler.class);
 
@@ -60,28 +62,19 @@ public class RmiInvocationHandler implements InvocationHandler {
     }
 
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-        if (args == null || args.length == 0) {
-            final String methodName = method.getName();
-            if ("isClosed".equals(methodName)) {
-                return factory.isClosed();
-            } else if ("getName".equals(methodName)) {
-                return factory.getName();
-            } else if ("close".equals(methodName)) {
-                close();
-                return null;
-            }
-        }
-
         RmiInvocationHandler.RmiMethod rmiMethod = getRmiMethod(method);
         final Class<?>[] parameterTypes = rmiMethod.parameterTypes;
-        boolean async = parameterTypes.length > 0 && parameterTypes[parameterTypes.length - 1] == Callback.class;
+        boolean async = parameterTypes.length > 0
+                        && parameterTypes[parameterTypes.length - 1] == Callback.class;
 
         if (args == null) {
             args = NO_OBJECTS;
         }
 
         int argsLength = args.length - (async ? 1 : 0);
-        final DataSocket ds = factory.acquire(async ? "async-org.freshvanilla.rmi" : "sync-org.freshvanilla.rmi");
+        final DataSocket ds = factory.acquire(async
+                        ? "async-org.freshvanilla.rmi"
+                        : "sync-org.freshvanilla.rmi");
 
         try {
             // write the sequence number.
@@ -114,13 +107,14 @@ public class RmiInvocationHandler implements InvocationHandler {
             }
 
             if (reply instanceof Throwable) {
-                Throwable t = (Throwable) reply;
+                Throwable t = (Throwable)reply;
                 appendStackTrace(ds, t);
                 throw t;
             }
 
             throw new AssertionError(reply);
-        } finally {
+        }
+        finally {
             factory.recycle(ds);
         }
     }
@@ -157,12 +151,13 @@ public class RmiInvocationHandler implements InvocationHandler {
             final List<StackTraceElement> stack2 = Arrays.asList(t2.getStackTrace());
             stack.addAll(stack2.subList(3, stack2.size()));
             stackTrace.set(t, stack.toArray(new StackTraceElement[stack.size()]));
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             throw new AssertionError(e);
         }
     }
 
-    private void close() {
+    public void close() {
         if (closeFactory) {
             factory.close();
         }
@@ -173,7 +168,10 @@ public class RmiInvocationHandler implements InvocationHandler {
     private RmiInvocationHandler.RmiMethod getRmiMethod(Method method) {
         RmiInvocationHandler.RmiMethod ret = rmiMethodMap.get(method);
         if (ret == null) {
-            rmiMethodMap.put(method, ret = new RmiInvocationHandler.RmiMethod(method.getName(), method.getReturnType(), method.getParameterTypes()));
+            rmiMethodMap.put(
+                method,
+                ret = new RmiInvocationHandler.RmiMethod(method.getName(), method.getReturnType(),
+                    method.getParameterTypes()));
         }
         return ret;
     }
@@ -186,7 +184,7 @@ public class RmiInvocationHandler implements InvocationHandler {
             this.ds = ds;
         }
 
-        @SuppressWarnings("unchecked")
+        @SuppressWarnings({"unchecked", "rawtypes"})
         public void onCallback(DataSocket dataSocket) throws Exception {
             Callback callback = null;
 
@@ -206,10 +204,11 @@ public class RmiInvocationHandler implements InvocationHandler {
                     callback.onCallback(reply);
                 }
                 else {
-                    callback.onException((Throwable) reply);
+                    callback.onException((Throwable)reply);
                 }
-            } catch (Exception e) {
-                if (ds.isClosed()) { 
+            }
+            catch (Exception e) {
+                if (ds.isClosed()) {
                     return;
                 }
                 if (!(e instanceof AsynchronousCloseException)) {
@@ -219,7 +218,8 @@ public class RmiInvocationHandler implements InvocationHandler {
                     if (callback != null) {
                         callback.onException(e);
                     }
-                } catch (Exception ignored) {
+                }
+                catch (Exception ignored) {
                     // ignored.
                 }
             }
@@ -234,7 +234,7 @@ public class RmiInvocationHandler implements InvocationHandler {
         public final String methodName;
         public final Class<?> returnType;
         public final Class<?>[] parameterTypes;
-    
+
         RmiMethod(String methodName, Class<?> returnType, Class<?>[] parameterTypes) {
             this.methodName = methodName;
             this.returnType = returnType;

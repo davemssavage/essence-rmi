@@ -13,6 +13,7 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
+
 package org.freshvanilla.rmi;
 
 import java.io.Serializable;
@@ -40,8 +41,7 @@ public class WrapperPojo extends AbstractPojo implements Serializable {
                        Float floatField,
                        Long longField,
                        Double doubleField,
-                       String stringField)
-    {
+                       String stringField) {
         this.booleanField = booleanField;
         this.byteField = byteField;
         this.shortField = shortField;

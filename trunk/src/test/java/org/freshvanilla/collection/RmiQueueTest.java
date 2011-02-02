@@ -13,6 +13,7 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
+
 package org.freshvanilla.collection;
 
 import java.io.IOException;
@@ -25,7 +26,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.freshvanilla.rmi.Proxies;
 import org.freshvanilla.rmi.VanillaRmiServer;
 import org.freshvanilla.test.AbstractTestCase;
-import org.freshvanilla.utils.SimpleResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,7 +35,8 @@ public class RmiQueueTest extends AbstractTestCase {
 
     public static void test_queue_over_rmi() throws IOException, InterruptedException {
         BlockingQueue<Integer> queue = new ArrayBlockingQueue<Integer>(10);
-        final VanillaRmiServer<BlockingQueue<Integer>> server = Proxies.newServer("test_queue_over_rmi", 0, queue);
+        final VanillaRmiServer<BlockingQueue<Integer>> server = Proxies.newServer("test_queue_over_rmi", 0,
+            queue);
 
         try {
             final String serverURL = "localhost:" + server.getPort();
@@ -46,16 +47,19 @@ public class RmiQueueTest extends AbstractTestCase {
                     BlockingQueue<Integer> client = null;
 
                     try {
-                        client = Proxies.newClient("test_queue_over_rmi-producer", serverURL, BlockingQueue.class);
+                        client = Proxies.newClient("test_queue_over_rmi-producer", serverURL,
+                            BlockingQueue.class);
 
                         for (int i = 0; i < 100; i++) {
                             assertTrue(client.offer(i));
                             Thread.sleep(5);
                         }
-                    } catch (Exception e) {
+                    }
+                    catch (Exception e) {
                         throw new AssertionError(e);
-                    } finally {
-                        if (client != null) ((SimpleResource) client).close();
+                    }
+                    finally {
+                        closeClient(client);
                     }
                 }
             });
@@ -71,21 +75,24 @@ public class RmiQueueTest extends AbstractTestCase {
                     BlockingQueue<Integer> client = null;
 
                     try {
-                        client = Proxies.newClient("test_queue_over_rmi-consumer", serverURL, BlockingQueue.class);
+                        client = Proxies.newClient("test_queue_over_rmi-consumer", serverURL,
+                            BlockingQueue.class);
 
                         for (int i = 0; i < 1000; i++) {
                             final Integer integer = client.poll(200, TimeUnit.MILLISECONDS);
                             if (integer == null) {
                                 break;
                             }
-                            assertEquals(i, (int) integer);
+                            assertEquals(i, (int)integer);
                             passed.incrementAndGet();
                         }
                         finished.set(true);
-                    } catch (Exception e) {
+                    }
+                    catch (Exception e) {
                         throw new AssertionError(e);
-                    } finally {
-                        if (client != null) ((SimpleResource) client).close();
+                    }
+                    finally {
+                        closeClient(client);
                     }
                 }
             });
@@ -95,14 +102,18 @@ public class RmiQueueTest extends AbstractTestCase {
             consumer.join(5000);
             assertEquals(100, passed.get());
             assertTrue(finished.get());
-        } finally {
-            if (server != null) server.close();
+        }
+        finally {
+            if (server != null) {
+                server.close();
+            }
         }
     }
 
     public static void test_queue_over_rmi4() throws IOException, InterruptedException {
         BlockingQueue<Integer> queue = new ArrayBlockingQueue<Integer>(10);
-        final VanillaRmiServer<BlockingQueue<Integer>> server = Proxies.newServer("test_queue_over_rmi", 0, queue);
+        final VanillaRmiServer<BlockingQueue<Integer>> server = Proxies.newServer("test_queue_over_rmi", 0,
+            queue);
 
         try {
             final String serverURL = "localhost:" + server.getPort();
@@ -112,18 +123,19 @@ public class RmiQueueTest extends AbstractTestCase {
                 public void run() {
                     BlockingQueue<Integer> client = null;
                     try {
-                        client = Proxies.newClient("test_queue_over_rmi4-producer", serverURL, BlockingQueue.class);
+                        client = Proxies.newClient("test_queue_over_rmi4-producer", serverURL,
+                            BlockingQueue.class);
 
                         for (int i = 0; i < 250; i++) {
                             assertTrue(client.offer(i, 200, TimeUnit.MILLISECONDS));
                             Thread.sleep(5);
                         }
-                    } catch (InterruptedException e) {
+                    }
+                    catch (InterruptedException e) {
                         throw new AssertionError(e);
-                    } finally {
-                        if (client != null) {
-                            ((SimpleResource) client).close();
-                        }
+                    }
+                    finally {
+                        closeClient(client);
                     }
                 }
             };
@@ -142,7 +154,8 @@ public class RmiQueueTest extends AbstractTestCase {
                     BlockingQueue<Integer> client = null;
 
                     try {
-                        client = Proxies.newClient("test_queue_over_rmi4-consumer", serverURL, BlockingQueue.class);
+                        client = Proxies.newClient("test_queue_over_rmi4-consumer", serverURL,
+                            BlockingQueue.class);
 
                         for (int i = 0; i < 1000; i++) {
                             final Integer integer = client.poll(200, TimeUnit.MILLISECONDS);
@@ -153,12 +166,12 @@ public class RmiQueueTest extends AbstractTestCase {
                             passed.incrementAndGet();
                         }
                         finished.incrementAndGet();
-                    } catch (InterruptedException e) {
+                    }
+                    catch (InterruptedException e) {
                         throw new AssertionError(e);
-                    } finally {
-                        if (client != null) {
-                            ((SimpleResource) client).close();
-                        }
+                    }
+                    finally {
+                        closeClient(client);
                     }
                 }
             };
@@ -177,10 +190,9 @@ public class RmiQueueTest extends AbstractTestCase {
 
             assertEquals(1000, passed.get());
             assertEquals(4, finished.get());
-        } finally {
-            if (server != null) {
-                server.close();
-            }
+        }
+        finally {
+            closeServer(server);
         }
     }
 

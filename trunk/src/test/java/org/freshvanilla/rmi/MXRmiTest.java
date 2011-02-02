@@ -13,9 +13,9 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
+
 package org.freshvanilla.rmi;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
@@ -29,12 +29,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class MXRmiTest extends AbstractTestCase {
-    
-    private static Logger LOG = LoggerFactory.getLogger(MXRmiTest.class.getName()); 
+
+    private static Logger LOG = LoggerFactory.getLogger(MXRmiTest.class.getName());
     private static final NumberFormat DECIMAL = new DecimalFormat();
 
     public static void test_MXService() throws IOException {
-        VanillaRmiServer<RuntimeMXBean> server = Proxies.newServer("mx", 0, ManagementFactory.getRuntimeMXBean());
+        VanillaRmiServer<RuntimeMXBean> server = Proxies.newServer("mx", 0,
+            ManagementFactory.getRuntimeMXBean());
         RuntimeMXBean mxBean = null;
 
         try {
@@ -42,12 +43,12 @@ public class MXRmiTest extends AbstractTestCase {
 
             final String name = mxBean.getName();
             assertNotNull(name);
-            
+
             long start = System.nanoTime();
 
             final String path = mxBean.getClassPath();
             assertNotNull(path);
-            
+
             final long startTime = mxBean.getStartTime();
             assertEquals(ManagementFactory.getRuntimeMXBean().getStartTime(), startTime);
 
@@ -63,12 +64,12 @@ public class MXRmiTest extends AbstractTestCase {
 
             long time = System.nanoTime() - start;
             int count = 5;
-            LOG.info("Got " + count + " values in " + DECIMAL.format(time / 1000 / count) + " us/call without a warm up.");
-        } finally {
-            if (mxBean != null) {
-                ((Closeable) mxBean).close();
-            }
-            server.close();
+            LOG.info("Got " + count + " values in " + DECIMAL.format(time / 1000 / count)
+                     + " us/call without a warm up.");
+        }
+        finally {
+            closeClient(mxBean);
+            closeServer(server);
         }
     }
 }

@@ -13,11 +13,11 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
+
 package org.freshvanilla.rmi;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.Closeable;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -44,32 +44,33 @@ public class BenchmarkTest extends AbstractTestCase {
 
         final int size = 5000;
         long start, time;
-        
+
         start = System.nanoTime();
         for (int i = 0; i < size; i++) {
             new Integer(i);
         }
         time = System.nanoTime() - start;
-        LOG.info("Integer construction time= " + (time/size) + " ns.");
+        LOG.info("Integer construction time= " + (time / size) + " ns.");
 
         PrimitivePojo[] list2 = new PrimitivePojo[size];
         start = System.nanoTime();
         for (int i = 0; i < size; i++) {
-            list2[i] = new PrimitivePojo(true, (byte) 1, (short) 2, '3', i, 5.0f, 6L, 7.0d);
+            list2[i] = new PrimitivePojo(true, (byte)1, (short)2, '3', i, 5.0f, 6L, 7.0d);
         }
         time = System.nanoTime() - start;
         assertNotNull(list2[0]);
-        LOG.info("PrimitivePojo add time= " + (time/size) + " ns.");
+        LOG.info("PrimitivePojo add time= " + (time / size) + " ns.");
 
         List<PrimitivePojo> primitivePojos = new ArrayList<PrimitivePojo>(size);
         List<WrapperPojo> wrapperPojos = new ArrayList<WrapperPojo>(size);
         start = System.nanoTime();
         for (int i = 0; i < size; i++) {
-            primitivePojos.add(new PrimitivePojo(true, (byte) 1, (short) 2, '3', i, 5.0f, i, 7.0d));
-            wrapperPojos.add(new WrapperPojo(i % 2 == 0, (byte) i, (short) i, (char) i, i, (float) i, (long) i, (double) i, String.valueOf(i)));
+            primitivePojos.add(new PrimitivePojo(true, (byte)1, (short)2, '3', i, 5.0f, i, 7.0d));
+            wrapperPojos.add(new WrapperPojo(i % 2 == 0, (byte)i, (short)i, (char)i, i, (float)i, (long)i,
+                (double)i, String.valueOf(i)));
         }
         time = System.nanoTime() - start;
-        LOG.info("pojo construction time= " + (time/size/2) + " ns.");
+        LOG.info("pojo construction time= " + (time / size / 2) + " ns.");
         assertEquals(size, primitivePojos.size());
 
         for (int i = 0; i <= 5; i++) {
@@ -81,7 +82,7 @@ public class BenchmarkTest extends AbstractTestCase {
             assertNotNull(listB);
             assertNotNull(list2B);
             if (i > 0) {
-                LOG.info(i + ": pojo Java serialization time= " + (time/size/2) + " ns per pojo.");
+                LOG.info(i + ": pojo Java serialization time= " + (time / size / 2) + " ns per pojo.");
             }
         }
 
@@ -99,22 +100,20 @@ public class BenchmarkTest extends AbstractTestCase {
                 assertEquals(primitivePojos, listB);
                 assertEquals(wrapperPojos, list2B);
                 if (i > 0) {
-                    LOG.info(i + ": Latency for " + primitivePojos.size() + " pojos =" + NF.format(time / 4) + " ns. each way. per pojo=" + NF.format(time / size / 4));
+                    LOG.info(i + ": Latency for " + primitivePojos.size() + " pojos =" + NF.format(time / 4)
+                             + " ns. each way. per pojo=" + NF.format(time / size / 4));
                 }
             }
-        } finally {
-            if (service != null) {
-                ((Closeable) service).close();
-            }
-            if (server != null) {
-                server.close();
-            }
+        }
+        finally {
+            closeClient(service);
+            closeServer(server);
         }
     }
 
     @SuppressWarnings("unchecked")
     private static <T> T fromBytes(byte[] primBytes) throws IOException, ClassNotFoundException {
-        return (T) new ObjectInputStream(new ByteArrayInputStream(primBytes)).readObject();
+        return (T)new ObjectInputStream(new ByteArrayInputStream(primBytes)).readObject();
     }
 
     private static byte[] toBytes(Object list) throws IOException {
@@ -133,18 +132,19 @@ public class BenchmarkTest extends AbstractTestCase {
             server = Proxies.newServer(getName(), 0, new ServiceImpl());
             service = Proxies.newClient(getName() + "-clnt", "" + server.getPort(), IService.class);
             long start = 0;
-            final PrimitivePojo ppojo = new PrimitivePojo(true, (byte) 1, (short) 2, '3', 4, 5.0f, 6L, 7.0d);
-            final WrapperPojo wpojo = new WrapperPojo(true, (byte) 1, (short) 2, '3', 4, 5.0f, 6L, 7.0d, "eight");
+            final PrimitivePojo ppojo = new PrimitivePojo(true, (byte)1, (short)2, '3', 4, 5.0f, 6L, 7.0d);
+            final WrapperPojo wpojo = new WrapperPojo(true, (byte)1, (short)2, '3', 4, 5.0f, 6L, 7.0d,
+                "eight");
             for (int i = 0; i < RUNS * 2; i++) {
-                if (i == RUNS)
-                    start = System.nanoTime();
+                if (i == RUNS) start = System.nanoTime();
                 service.empty();
-                assertEquals(0, service.prims(false, (byte) 0, '\0', (short) 0, 0, 0.0f, 0.0));
-                assertEquals(7, service.prims(true, (byte) 1, '2', (short) 3, 4, 5.0f, 6.0));
+                assertEquals(0, service.prims(false, (byte)0, '\0', (short)0, 0, 0.0f, 0.0));
+                assertEquals(7, service.prims(true, (byte)1, '2', (short)3, 4, 5.0f, 6.0));
                 assertNull(service.wraps(null, null, null, null, null, null, null));
-                assertEquals(0, (int) service.wraps(false, (byte) 0, '\0', (short) 0, 0, 0.0f, 0.0));
-                assertEquals(7, (int) service.wraps(true, (byte) 1, '2', (short) 3, 4, 5.0f, 6.0));
-                assertEquals(0, service.count(Collections.emptySet(), Collections.emptyList(), Collections.emptyMap()));
+                assertEquals(0, (int)service.wraps(false, (byte)0, '\0', (short)0, 0, 0.0f, 0.0));
+                assertEquals(7, (int)service.wraps(true, (byte)1, '2', (short)3, 4, 5.0f, 6.0));
+                assertEquals(0,
+                    service.count(Collections.emptySet(), Collections.emptyList(), Collections.emptyMap()));
                 assertEquals(getName(), service.echo(getName()));
                 assertEquals(ppojo, service.echo(ppojo));
                 assertEquals(wpojo, service.echo(wpojo));
@@ -152,9 +152,10 @@ public class BenchmarkTest extends AbstractTestCase {
             long time = System.nanoTime() - start;
             long latency = time / RUNS / 9;
             LOG.info("Average latency=" + NF.format(latency) + " ns.");
-        } finally {
-            if (service != null) ((Closeable) service).close();
-            if (server != null) server.close();
+        }
+        finally {
+            closeClient(service);
+            closeServer(server);
         }
     }
 
@@ -173,8 +174,9 @@ public class BenchmarkTest extends AbstractTestCase {
             List<Long> list = new ArrayList<Long>(RUNS * 10);
             List<Long> list2 = new ArrayList<Long>(RUNS);
 
-            final PrimitivePojo ppojo = new PrimitivePojo(true, (byte) 1, (short) 2, '3', 4, 5.0f, 6L, 7.0d);
-            final WrapperPojo wpojo = new WrapperPojo(true, (byte) 1, (short) 2, '3', 4, 5.0f, 6L, 7.0d, "eight");
+            final PrimitivePojo ppojo = new PrimitivePojo(true, (byte)1, (short)2, '3', 4, 5.0f, 6L, 7.0d);
+            final WrapperPojo wpojo = new WrapperPojo(true, (byte)1, (short)2, '3', 4, 5.0f, 6L, 7.0d,
+                "eight");
 
             for (int i = 0; i < RUNS * 2; i++) {
                 final boolean time = i > RUNS;
@@ -190,14 +192,14 @@ public class BenchmarkTest extends AbstractTestCase {
                     start = System.nanoTime();
                 }
 
-                assertEquals(0, service.prims(false, (byte) 0, '\0', (short) 0, 0, 0.0f, 0.0));
+                assertEquals(0, service.prims(false, (byte)0, '\0', (short)0, 0, 0.0f, 0.0));
 
                 if (time) {
                     list.add(System.nanoTime() - start);
                     start = System.nanoTime();
                 }
 
-                assertEquals(7, service.prims(true, (byte) 1, '2', (short) 3, 4, 5.0f, 6.0));
+                assertEquals(7, service.prims(true, (byte)1, '2', (short)3, 4, 5.0f, 6.0));
 
                 if (time) {
                     list.add(System.nanoTime() - start);
@@ -211,21 +213,22 @@ public class BenchmarkTest extends AbstractTestCase {
                     start = System.nanoTime();
                 }
 
-                assertEquals(0, (int) service.wraps(false, (byte) 0, '\0', (short) 0, 0, 0.0f, 0.0));
+                assertEquals(0, (int)service.wraps(false, (byte)0, '\0', (short)0, 0, 0.0f, 0.0));
 
                 if (time) {
                     list.add(System.nanoTime() - start);
                     start = System.nanoTime();
                 }
 
-                assertEquals(7, (int) service.wraps(true, (byte) 1, '2', (short) 3, 4, 5.0f, 6.0));
+                assertEquals(7, (int)service.wraps(true, (byte)1, '2', (short)3, 4, 5.0f, 6.0));
 
                 if (time) {
                     list.add(System.nanoTime() - start);
                     start = System.nanoTime();
                 }
 
-                assertEquals(0, service.count(Collections.emptySet(), Collections.emptyList(), Collections.emptyMap()));
+                assertEquals(0,
+                    service.count(Collections.emptySet(), Collections.emptyList(), Collections.emptyMap()));
 
                 if (time) {
                     list.add(System.nanoTime() - start);
@@ -278,18 +281,22 @@ public class BenchmarkTest extends AbstractTestCase {
             Collections.sort(list);
             Collections.sort(list2);
 
-            // give the timings compensating for the overhead of the org.freshvanilla.test itself.
-            LOG.info("Mid latency=" + NF.format(list.get(list.size() / 2) - list2.get(list2.size() / 2)) + " ns.");
-            LOG.info("90% latency=" + NF.format(list.get(list.size() * 9 / 10) - list2.get(list2.size() * 9 / 10)) + " ns.");
-            LOG.info("98% latency=" + NF.format(list.get(list.size() * 98 / 100) - list2.get(list2.size() * 98 / 100)) + " ns.");
+            // give the timings compensating for the overhead of the org.freshvanilla.test
+            // itself.
+            LOG.info("Mid latency=" + NF.format(list.get(list.size() / 2) - list2.get(list2.size() / 2))
+                     + " ns.");
+            LOG.info("90% latency="
+                     + NF.format(list.get(list.size() * 9 / 10) - list2.get(list2.size() * 9 / 10)) + " ns.");
+            LOG.info("98% latency="
+                     + NF.format(list.get(list.size() * 98 / 100) - list2.get(list2.size() * 98 / 100))
+                     + " ns.");
 
-        } finally {
+        }
+        finally {
             assert (server != null);
             assertFalse(server.getProvider().byeCalled);
 
-            if (service != null) {
-                ((Closeable) service).close();
-            }
+            closeClient(service);
 
             for (int i = 0; i < 10; i++) {
                 if (server.getProvider().byeCalled) {
@@ -300,9 +307,7 @@ public class BenchmarkTest extends AbstractTestCase {
 
             assertTrue(server.getProvider().byeCalled);
 
-            if (server != null) {
-                server.close();
-            }
+            closeServer(server);
         }
     }
 }
@@ -329,13 +334,8 @@ class ServiceImpl implements IService {
     volatile boolean byeCalled = false;
 
     public int prims(boolean z, byte b, char c, short s, int i, float f, double d) {
-        return (z ? 1 : 0) +
-                (b > 0 ? 1 : 0) +
-                (c > 0 ? 1 : 0) +
-                (s > 0 ? 1 : 0) +
-                (i > 0 ? 1 : 0) +
-                (f > 0 ? 1 : 0) +
-                (d > 0 ? 1 : 0);
+        return (z ? 1 : 0) + (b > 0 ? 1 : 0) + (c > 0 ? 1 : 0) + (s > 0 ? 1 : 0) + (i > 0 ? 1 : 0)
+               + (f > 0 ? 1 : 0) + (d > 0 ? 1 : 0);
     }
 
     public Integer wraps(Boolean z, Byte b, Character c, Short s, Integer i, Float f, Double d) {

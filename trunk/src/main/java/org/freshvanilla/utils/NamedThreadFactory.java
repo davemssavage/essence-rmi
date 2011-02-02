@@ -13,6 +13,7 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
+
 package org.freshvanilla.utils;
 
 import java.util.concurrent.ThreadFactory;
@@ -33,8 +34,7 @@ public class NamedThreadFactory implements ThreadFactory {
     public Thread newThread(Runnable r) {
         String name = this.name;
         int id = counter.incrementAndGet();
-        if (id > 1)
-            name += ':' + id;
+        if (id > 1) name += ':' + id;
         Thread t = new Thread(r, name);
         t.setPriority(priority);
         t.setDaemon(daemon);

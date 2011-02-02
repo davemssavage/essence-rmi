@@ -13,9 +13,9 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
+
 package org.freshvanilla.collection;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -38,11 +38,13 @@ public class RmiMapTest extends AbstractTestCase {
             map.put(i, createPojo(i));
         }
 
-        VanillaRmiServer<ConcurrentMap<Integer, PrimitivePojo>> server = Proxies.newServer("test_queue_over_rmi", 0, map);
+        VanillaRmiServer<ConcurrentMap<Integer, PrimitivePojo>> server = Proxies.newServer(
+            "test_queue_over_rmi", 0, map);
         ConcurrentMap<Integer, PrimitivePojo> client = null;
 
         try {
-            client = Proxies.newClient("test_queue_over_rmi-client", "localhost:" + server.getPort(), ConcurrentMap.class);
+            client = Proxies.newClient("test_queue_over_rmi-client", "localhost:" + server.getPort(),
+                ConcurrentMap.class);
 
             assertEquals(size, client.size());
 
@@ -87,18 +89,15 @@ public class RmiMapTest extends AbstractTestCase {
             assertEquals(client, map);
             assertEquals(map, client);
             assertEquals(client.hashCode(), map.hashCode());
-        } finally {
-            if (client != null) {
-                ((Closeable) client).close();
-            }
-            if (server != null) {
-                server.close();
-            }
+        }
+        finally {
+            closeClient(client);
+            closeServer(server);
         }
     }
 
     private static PrimitivePojo createPojo(int i) {
-        return new PrimitivePojo(true, (byte) 1, (short) 2, '3', i, 5.0f, i, 7.0d);
+        return new PrimitivePojo(true, (byte)1, (short)2, '3', i, 5.0f, i, 7.0d);
     }
 
 }

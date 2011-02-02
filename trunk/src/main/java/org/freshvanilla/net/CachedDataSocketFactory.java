@@ -13,6 +13,7 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
+
 package org.freshvanilla.net;
 
 import java.util.HashSet;
@@ -111,7 +112,8 @@ public class CachedDataSocketFactory extends VanillaResource implements Factory<
 
         try {
             return dataSocketBuilder.acquire(description);
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             throw Unsafe.rethrow(e);
         }
     }
@@ -143,9 +145,11 @@ public class CachedDataSocketFactory extends VanillaResource implements Factory<
                 else {
                     LOG.debug(name + ": closing as over maximum connections " + dataSocket);
                 }
-            } catch (InterruptedException ignored) {
+            }
+            catch (InterruptedException ignored) {
                 Thread.currentThread().interrupt();
-            } finally {
+            }
+            finally {
                 if (dataSocket != null) {
                     dataSocket.close();
                 }

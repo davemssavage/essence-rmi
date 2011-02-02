@@ -13,6 +13,7 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
+
 package org.freshvanilla.net;
 
 import java.io.IOException;
@@ -27,12 +28,13 @@ public class VanillaPojoSerializer implements PojoSerializer {
 
     public <Pojo> boolean canSerialize(Pojo pojo) {
         final String className = pojo.getClass().getName();
-        return !className.startsWith("java") && !className.startsWith("com.sun.") && !pojo.getClass().isArray();
+        return !className.startsWith("java") && !className.startsWith("com.sun.")
+               && !pojo.getClass().isArray();
     }
 
     @SuppressWarnings("unchecked")
     public <Pojo> void serialize(ByteBuffer wb, WireFormat wf, Pojo pojo) throws IOException {
-        MetaClass<Pojo> clazz = MetaClasses.acquireMetaClass((Class<Pojo>) pojo.getClass());
+        MetaClass<Pojo> clazz = MetaClasses.acquireMetaClass((Class<Pojo>)pojo.getClass());
         wf.writeTag(wb, clazz.nameWithParameters());
 
         for (MetaField<Pojo, ?> field : clazz.fields()) {
@@ -41,13 +43,14 @@ public class VanillaPojoSerializer implements PojoSerializer {
     }
 
     public <Pojo> Pojo deserialize(ByteBuffer rb, WireFormat wf) throws IOException {
-        String classWithParameters = (String) wf.readObject(rb);
+        String classWithParameters = (String)wf.readObject(rb);
         MetaClass<Pojo> clazz = MetaClasses.acquireMetaClass(classWithParameters);
         Pojo pojo;
 
         try {
             pojo = clazz.newInstance();
-        } catch (InstantiationException e) {
+        }
+        catch (InstantiationException e) {
             throw new NotSerializableException("Exception attempting to create " + clazz + ' ' + e);
         }
 

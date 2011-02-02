@@ -13,6 +13,7 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
+
 package org.freshvanilla.net;
 
 import java.io.IOException;
@@ -39,7 +40,12 @@ public class VanillaDataServerSocket extends VanillaResource implements Runnable
     private final ExecutorService executor;
     private final int port;
 
-    public VanillaDataServerSocket(String name, Factory<DataSocket, DataSocketHandler> factory, Map<String, Object> header, int port, ObjectBuilder<WireFormat> wireFormatBuilder, int maximumMessageSize) throws IOException {
+    public VanillaDataServerSocket(String name,
+                                   Factory<DataSocket, DataSocketHandler> factory,
+                                   Map<String, Object> header,
+                                   int port,
+                                   ObjectBuilder<WireFormat> wireFormatBuilder,
+                                   int maximumMessageSize) throws IOException {
         super(name);
         this.factory = factory;
         this.header = header;
@@ -50,7 +56,8 @@ public class VanillaDataServerSocket extends VanillaResource implements Runnable
         this.channel.configureBlocking(true);
         port = bindToPort(port);
         this.port = port;
-        this.executor = Executors.newCachedThreadPool(new NamedThreadFactory(name + "-server", Thread.MAX_PRIORITY, true));
+        this.executor = Executors.newCachedThreadPool(new NamedThreadFactory(name + "-server",
+            Thread.MAX_PRIORITY, true));
         this.executor.submit(this);
     }
 
@@ -59,21 +66,22 @@ public class VanillaDataServerSocket extends VanillaResource implements Runnable
 
         while (true) {
             if (findAPort) {
-                port = (int) (Math.random() * (63 * 1024) + 1024);
+                port = (int)(Math.random() * (63 * 1024) + 1024);
             }
 
             try {
                 channel.socket().bind(new InetSocketAddress(port));
                 getLog().debug(name + ": Listening on port " + port);
                 break;
-            } catch (SocketException e) {
-                if (!findAPort)
-                    throw e;
+            }
+            catch (SocketException e) {
+                if (!findAPort) throw e;
             }
 
             try {
                 Thread.sleep(50);
-            } catch (InterruptedException e) {
+            }
+            catch (InterruptedException e) {
                 throw new AssertionError(e);
             }
         }
@@ -91,7 +99,8 @@ public class VanillaDataServerSocket extends VanillaResource implements Runnable
                 Runnable runnable = new RmiServerRunnable(socketChannel);
                 executor.submit(runnable);
             }
-        } catch (IOException e) {
+        }
+        catch (IOException e) {
             if (!isClosed()) {
                 getLog().error("Unexpected error for running server", e);
                 close();
@@ -103,7 +112,8 @@ public class VanillaDataServerSocket extends VanillaResource implements Runnable
         super.close();
         try {
             channel.close();
-        } catch (IOException ignored) {
+        }
+        catch (IOException ignored) {
             // ignored.
         }
         executor.shutdown();
@@ -125,27 +135,31 @@ public class VanillaDataServerSocket extends VanillaResource implements Runnable
             DataSocket ds = null;
             DataSocketHandler socketHandler = null;
             try {
-                ds = new VanillaDataSocket(name, null, socketChannel, wireFormatBuilder.create(), header, maximumMessageSize);
+                ds = new VanillaDataSocket(name, null, socketChannel, wireFormatBuilder.create(), header,
+                    maximumMessageSize);
                 socketHandler = factory.acquire(ds);
                 socketHandler.onConnection();
                 while (!ds.isClosed()) {
                     socketHandler.onMessage();
                 }
                 socketHandler.onDisconnection();
-            } catch (Throwable e) {
+            }
+            catch (Throwable e) {
                 getLog().error("Unexpected error for running server", e);
                 try {
                     if (socketHandler != null) {
                         socketHandler.onDisconnection();
                     }
-                } catch (Exception ignored) {
+                }
+                catch (Exception ignored) {
                     // ignored
                 }
                 try {
                     if (ds != null) {
                         ds.close();
                     }
-                } catch (Exception ignored) {
+                }
+                catch (Exception ignored) {
                     // ignored
                 }
             }

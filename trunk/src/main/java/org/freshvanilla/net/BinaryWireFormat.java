@@ -13,6 +13,7 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
+
 package org.freshvanilla.net;
 
 import java.io.ByteArrayInputStream;
@@ -32,8 +33,8 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.freshvanilla.lang.MetaClass;
 import org.freshvanilla.lang.MetaClasses;
@@ -47,7 +48,7 @@ public class BinaryWireFormat implements WireFormat {
     private static final int BYTES_SIZE = 1024;
     private static final Object[] NO_OBJECTS = {};
 
-    private static final byte SIGNED8_STAG = (byte) ~SpecialTag.SIGNED8.ordinal();
+    private static final byte SIGNED8_STAG = (byte)~SpecialTag.SIGNED8.ordinal();
     private static final SpecialTag[] SPECIAL_TAGS = SpecialTag.values();
 
     private final byte[] outBytesArray = new byte[BYTES_SIZE];
@@ -69,11 +70,11 @@ public class BinaryWireFormat implements WireFormat {
         byte b = readBuffer.get();
         SpecialTag tag = asSTag(b, "boolean");
         switch (tag) {
-            case TRUE:
+            case TRUE :
                 return true;
-            case FALSE:
+            case FALSE :
                 return false;
-            default:
+            default :
                 throw new StreamCorruptedException("Expected a boolean but got a " + tag);
         }
     }
@@ -83,8 +84,7 @@ public class BinaryWireFormat implements WireFormat {
     }
 
     private static SpecialTag asSTag(byte b, String expected) throws StreamCorruptedException {
-        if (b >= 0)
-            throw new StreamCorruptedException("Expected " + expected + " but got a value of " + b);
+        if (b >= 0) throw new StreamCorruptedException("Expected " + expected + " but got a value of " + b);
         final SpecialTag[] tags = SPECIAL_TAGS;
         int b2 = ~b;
         if (b2 >= tags.length)
@@ -99,28 +99,28 @@ public class BinaryWireFormat implements WireFormat {
         }
         SpecialTag tag = asSTag(b, "number");
         switch (tag) {
-            case SIGNED1:
+            case SIGNED1 :
                 return readBuffer.get();
 
-            case SIGNED2:
+            case SIGNED2 :
                 return readBuffer.getShort();
 
-            case SIGNED4:
+            case SIGNED4 :
                 return readBuffer.getInt();
 
-            case SIGNED8:
+            case SIGNED8 :
                 return readBuffer.getLong();
 
-            case FLOAT4:
-                return (long) readBuffer.getFloat();
+            case FLOAT4 :
+                return (long)readBuffer.getFloat();
 
-            case FLOAT8:
-                return (long) readBuffer.getDouble();
+            case FLOAT8 :
+                return (long)readBuffer.getDouble();
 
-            case CHAR:
+            case CHAR :
                 return readBuffer.getChar();
 
-            default:
+            default :
                 throw new StreamCorruptedException("Expected a number, got a " + tag);
         }
     }
@@ -129,7 +129,7 @@ public class BinaryWireFormat implements WireFormat {
         long len = readNum(readBuffer);
         if (len < 0 || len > Integer.MAX_VALUE)
             throw new StreamCorruptedException("length invalid, len=" + len);
-        return (int) len;
+        return (int)len;
     }
 
     public double readDouble(ByteBuffer readBuffer) throws StreamCorruptedException {
@@ -138,28 +138,28 @@ public class BinaryWireFormat implements WireFormat {
 
         SpecialTag tag = asSTag(b, "number");
         switch (tag) {
-            case SIGNED1:
+            case SIGNED1 :
                 return readBuffer.get();
 
-            case SIGNED2:
+            case SIGNED2 :
                 return readBuffer.getShort();
 
-            case SIGNED4:
+            case SIGNED4 :
                 return readBuffer.getInt();
 
-            case SIGNED8:
+            case SIGNED8 :
                 return readBuffer.getLong();
 
-            case FLOAT4:
+            case FLOAT4 :
                 return readBuffer.getFloat();
 
-            case FLOAT8:
+            case FLOAT8 :
                 return readBuffer.getDouble();
 
-            case CHAR:
+            case CHAR :
                 return readBuffer.getChar();
 
-            default:
+            default :
                 throw new StreamCorruptedException("Expected a double, got a " + tag);
         }
     }
@@ -183,8 +183,9 @@ public class BinaryWireFormat implements WireFormat {
                 objects = NO_OBJECTS;
             else
                 objects = new Object[len];
-        } else {
-            objects = (Object[]) Array.newInstance(componentType.getType(), len);
+        }
+        else {
+            objects = (Object[])Array.newInstance(componentType.getType(), len);
         }
         for (int i = 0; i < len; i++)
             objects[i] = readObject(readBuffer);
@@ -193,84 +194,84 @@ public class BinaryWireFormat implements WireFormat {
 
     public Object readObject(ByteBuffer readBuffer) throws IOException {
         byte b = readBuffer.get();
-        if (b >= 0)
-            return (int) b;
+        if (b >= 0) return (int)b;
         SpecialTag stag = asSTag(b, "object");
         switch (stag) {
-            case NULL:
+            case NULL :
                 return null;
 
-            case TRUE:
+            case TRUE :
                 return Boolean.TRUE;
 
-            case FALSE:
+            case FALSE :
                 return Boolean.FALSE;
 
-            case ARRAY:
+            case ARRAY :
                 return readArray0(readBuffer);
 
-            case SIGNED1:
+            case SIGNED1 :
                 return readBuffer.get();
 
-            case SIGNED2:
+            case SIGNED2 :
                 return readBuffer.getShort();
 
-            case SIGNED4:
+            case SIGNED4 :
                 return readBuffer.getInt();
 
-            case SIGNED8:
+            case SIGNED8 :
                 return readBuffer.getLong();
 
-            case FLOAT4:
+            case FLOAT4 :
                 return readBuffer.getFloat();
 
-            case FLOAT8:
+            case FLOAT8 :
                 return readBuffer.getDouble();
 
-            case CHAR:
+            case CHAR :
                 return readBuffer.getChar();
 
-            case SERIALIZABLE:
+            case SERIALIZABLE :
                 return readSerializable0(readBuffer);
 
-            case STRING:
+            case STRING :
                 return readString0(readBuffer);
 
-            case TAG:
+            case TAG :
                 return readTag0(readBuffer);
 
-            case LIST:
+            case LIST :
                 return readList(readBuffer);
 
-            case MAP:
+            case MAP :
                 return readMap(readBuffer);
 
-            case ENTRY:
+            case ENTRY :
                 return readEntry(readBuffer);
 
-            case ENUM:
+            case ENUM :
                 return readEnum(readBuffer);
 
-            case SET:
+            case SET :
                 return readSet(readBuffer);
 
-            case POJO:
+            case POJO :
                 return serializer.deserialize(readBuffer, this);
 
-            case BYTES:
+            case BYTES :
                 int len = readLen(readBuffer);
                 byte[] bytes = new byte[len];
                 readBuffer.get(bytes);
                 return bytes;
 
-            case CLASS:
+            case CLASS :
                 try {
                     return Class.forName(readString(readBuffer));
-                } catch (ClassNotFoundException e) {
+                }
+                catch (ClassNotFoundException e) {
                     throw new NotSerializableException(e.toString());
                 }
 
-            case META_CLASS:
+            case META_CLASS :
                 return MetaClasses.acquireMetaClass(readString(readBuffer));
         }
         throw new UnsupportedOperationException("Tag " + stag + " not supported.");
@@ -278,7 +279,9 @@ public class BinaryWireFormat implements WireFormat {
 
     private Map<Object, Object> readMap(ByteBuffer readBuffer) throws IOException {
         int len = readLen(readBuffer);
-        Map<Object, Object> map = len > 0 ? new LinkedHashMap<Object, Object>(len * 3 / 2) : Collections.emptyMap();
+        Map<Object, Object> map = len > 0
+                        ? new LinkedHashMap<Object, Object>(len * 3 / 2)
+                        : Collections.emptyMap();
         for (int i = 0; i < len; i++) {
             map.put(readObject(readBuffer), readObject(readBuffer));
         }
@@ -312,19 +315,21 @@ public class BinaryWireFormat implements WireFormat {
     public String readString(ByteBuffer readBuffer) throws IOException {
         final Object o = readObject(readBuffer);
         if (o instanceof String) {
-            return (String) o;
+            return (String)o;
         }
-        throw new StreamCorruptedException("Expected a String but got a " + (o == null ? "" : o.getClass()) + " was " + o);
+        throw new StreamCorruptedException("Expected a String but got a " + (o == null ? "" : o.getClass())
+                                           + " was " + o);
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
     private Enum readEnum(ByteBuffer readBuffer) throws IOException {
         String enumStr = readString(readBuffer);
         int pos = enumStr.indexOf(' ');
         try {
-            Class<Enum> enumClass = (Class<Enum>) Class.forName(enumStr.substring(0, pos));
+            Class<Enum> enumClass = (Class<Enum>)Class.forName(enumStr.substring(0, pos));
             return Enum.valueOf(enumClass, enumStr.substring(pos + 1));
-        } catch (ClassNotFoundException e) {
+        }
+        catch (ClassNotFoundException e) {
             throw new NotSerializableException(e.toString());
         }
     }
@@ -338,7 +343,8 @@ public class BinaryWireFormat implements WireFormat {
         Object ret;
         try {
             ret = ois.readObject();
-        } catch (ClassNotFoundException e) {
+        }
+        catch (ClassNotFoundException e) {
             throw new NotSerializableException(e.toString());
         }
         ois.close();
@@ -360,19 +366,20 @@ public class BinaryWireFormat implements WireFormat {
         if (object instanceof Number) {
             if (object instanceof Byte) {
                 writeSTag(writeBuffer, SpecialTag.SIGNED1);
-                writeBuffer.put((Byte) object);
+                writeBuffer.put((Byte)object);
                 return;
             }
             if (object instanceof Short) {
                 writeSTag(writeBuffer, SpecialTag.SIGNED2);
-                writeBuffer.putShort((Short) object);
+                writeBuffer.putShort((Short)object);
                 return;
             }
             if (object instanceof Integer) {
-                int value = (Integer) object;
+                int value = (Integer)object;
                 if (value >= 0 && value <= Byte.MAX_VALUE) {
-                    writeBuffer.put((byte) value);
-                } else {
+                    writeBuffer.put((byte)value);
+                }
+                else {
                     writeSTag(writeBuffer, SpecialTag.SIGNED4);
                     writeBuffer.putInt(value);
                 }
@@ -380,58 +387,68 @@ public class BinaryWireFormat implements WireFormat {
             }
             if (object instanceof Long) {
                 writeSTag(writeBuffer, SpecialTag.SIGNED8);
-                writeBuffer.putLong((Long) object);
+                writeBuffer.putLong((Long)object);
                 return;
             }
             if (object instanceof Float) {
                 writeSTag(writeBuffer, SpecialTag.FLOAT4);
-                writeBuffer.putFloat((Float) object);
+                writeBuffer.putFloat((Float)object);
                 return;
             }
             if (object instanceof Double) {
                 writeSTag(writeBuffer, SpecialTag.FLOAT8);
-                writeBuffer.putDouble((Double) object);
+                writeBuffer.putDouble((Double)object);
                 return;
             }
 
-        } else if (object instanceof Collection<?>) {
+        }
+        else if (object instanceof Collection<?>) {
             if (object instanceof Set<?>) {
-                writeCollection(writeBuffer, SpecialTag.SET, (Set<?>) object);
+                writeCollection(writeBuffer, SpecialTag.SET, (Set<?>)object);
             }
             else {
-                writeCollection(writeBuffer, SpecialTag.LIST, (Collection<?>) object);
+                writeCollection(writeBuffer, SpecialTag.LIST, (Collection<?>)object);
             }
             return;
-        } else if (object instanceof Map<?, ?>) {
-            writeMap(writeBuffer, (Map<?, ?>) object);
+        }
+        else if (object instanceof Map<?, ?>) {
+            writeMap(writeBuffer, (Map<?, ?>)object);
             return;
-        } else if (object instanceof Entry<?, ?>) {
-            writeEntry(writeBuffer, (Entry<?, ?>) object);
+        }
+        else if (object instanceof Entry<?, ?>) {
+            writeEntry(writeBuffer, (Entry<?, ?>)object);
             return;
-        } else if (object instanceof Enum<?>) {
-            writeEnum(writeBuffer, (Enum<?>) object);
+        }
+        else if (object instanceof Enum<?>) {
+            writeEnum(writeBuffer, (Enum<?>)object);
             return;
-        } else if (object instanceof Boolean) {
-            writeBoolean(writeBuffer, (Boolean) object);
+        }
+        else if (object instanceof Boolean) {
+            writeBoolean(writeBuffer, (Boolean)object);
             return;
-        } else if (object instanceof String) {
-            writeString(writeBuffer, (String) object);
+        }
+        else if (object instanceof String) {
+            writeString(writeBuffer, (String)object);
             return;
-        } else if (object instanceof Character) {
+        }
+        else if (object instanceof Character) {
             writeSTag(writeBuffer, SpecialTag.CHAR);
-            writeBuffer.putChar((Character) object);
+            writeBuffer.putChar((Character)object);
             return;
-        } else if (object instanceof Class<?>) {
+        }
+        else if (object instanceof Class<?>) {
             writeSTag(writeBuffer, SpecialTag.CLASS);
-            writeTag(writeBuffer, ((Class<?>) object).getName());
+            writeTag(writeBuffer, ((Class<?>)object).getName());
             return;
-        } else if (object instanceof MetaClass<?>) {
+        }
+        else if (object instanceof MetaClass<?>) {
             writeSTag(writeBuffer, SpecialTag.META_CLASS);
-            writeTag(writeBuffer, ((MetaClass<?>) object).nameWithParameters());
+            writeTag(writeBuffer, ((MetaClass<?>)object).nameWithParameters());
             return;
-        } else if (object instanceof byte[]) {
+        }
+        else if (object instanceof byte[]) {
             writeSTag(writeBuffer, SpecialTag.BYTES);
-            byte[] bytes = (byte[]) object;
+            byte[] bytes = (byte[])object;
             writeNum(writeBuffer, bytes.length);
             writeBuffer.put(bytes);
             return;
@@ -452,7 +469,7 @@ public class BinaryWireFormat implements WireFormat {
         for (Entry<?, ?> entry : map.entrySet()) {
             Object key = entry.getKey();
             if (key instanceof String)
-                writeTag(writeBuffer, (String) key);
+                writeTag(writeBuffer, (String)key);
             else
                 writeObject(writeBuffer, key);
             writeObject(writeBuffer, entry.getValue());
@@ -464,18 +481,19 @@ public class BinaryWireFormat implements WireFormat {
 
         Object key = entry.getKey();
         if (key instanceof String)
-            writeTag(writeBuffer, (String) key);
+            writeTag(writeBuffer, (String)key);
         else
             writeObject(writeBuffer, key);
         writeObject(writeBuffer, entry.getValue());
     }
 
-    private void writeCollection(ByteBuffer writeBuffer, SpecialTag stag, Collection<?> collection) throws IOException {
+    private void writeCollection(ByteBuffer writeBuffer, SpecialTag stag, Collection<?> collection)
+        throws IOException {
         writeSTag(writeBuffer, stag);
         writeNum(writeBuffer, collection.size());
         for (Object o : collection)
             if (o instanceof String)
-                writeTag(writeBuffer, (String) o);
+                writeTag(writeBuffer, (String)o);
             else
                 writeObject(writeBuffer, o);
     }
@@ -498,47 +516,56 @@ public class BinaryWireFormat implements WireFormat {
     }
 
     private static void writeSTag(ByteBuffer writeBuffer, SpecialTag stag) {
-        writeBuffer.put((byte) ~stag.ordinal());
+        writeBuffer.put((byte)~stag.ordinal());
     }
 
     public void writeNum(ByteBuffer writeBuffer, long value) {
         if (value >= 0 && value <= Byte.MAX_VALUE) {
-            writeBuffer.put((byte) value);
-        } else if (value == (byte) value) {
+            writeBuffer.put((byte)value);
+        }
+        else if (value == (byte)value) {
             writeSTag(writeBuffer, SpecialTag.SIGNED1);
-            writeBuffer.put((byte) value);
+            writeBuffer.put((byte)value);
 
-        } else if (value == (short) value) {
+        }
+        else if (value == (short)value) {
             writeSTag(writeBuffer, SpecialTag.SIGNED2);
-            writeBuffer.putShort((short) value);
+            writeBuffer.putShort((short)value);
 
-        } else if (value == (int) value) {
+        }
+        else if (value == (int)value) {
             writeSTag(writeBuffer, SpecialTag.SIGNED4);
-            writeBuffer.putInt((int) value);
-        } else {
+            writeBuffer.putInt((int)value);
+        }
+        else {
             writeBuffer.put(SIGNED8_STAG);
             writeBuffer.putLong(value);
         }
     }
 
     public static void writeDouble(ByteBuffer writeBuffer, double value) {
-        if (value == (byte) value) {
+        if (value == (byte)value) {
             if (value >= 0 && value <= Byte.MAX_VALUE) {
-                writeBuffer.put((byte) value);
-            } else {
-                writeSTag(writeBuffer, SpecialTag.SIGNED1);
-                writeBuffer.put((byte) value);
+                writeBuffer.put((byte)value);
             }
-        } else if (value == (short) value) {
+            else {
+                writeSTag(writeBuffer, SpecialTag.SIGNED1);
+                writeBuffer.put((byte)value);
+            }
+        }
+        else if (value == (short)value) {
             writeSTag(writeBuffer, SpecialTag.SIGNED2);
-            writeBuffer.putShort((short) value);
-        } else if (value == (int) value) {
+            writeBuffer.putShort((short)value);
+        }
+        else if (value == (int)value) {
             writeSTag(writeBuffer, SpecialTag.SIGNED4);
-            writeBuffer.putInt((int) value);
-        } else if (value == (float) value) {
+            writeBuffer.putInt((int)value);
+        }
+        else if (value == (float)value) {
             writeSTag(writeBuffer, SpecialTag.FLOAT4);
-            writeBuffer.putFloat((float) value);
-        } else {
+            writeBuffer.putFloat((float)value);
+        }
+        else {
             writeSTag(writeBuffer, SpecialTag.FLOAT8);
             writeBuffer.putDouble(value);
         }
@@ -555,7 +582,8 @@ public class BinaryWireFormat implements WireFormat {
             outTagMap.put(tag, num2);
             writeNum(writeBuffer, num2);
             writeString0(writeBuffer, tag);
-        } else {
+        }
+        else {
             writeNum(writeBuffer, num);
         }
     }
@@ -581,9 +609,10 @@ public class BinaryWireFormat implements WireFormat {
             for (int i = 0; i < len2; i++) {
                 char ch = text.charAt(i + off);
                 if (ch < 255) {
-                    bytes[i] = (byte) ch;
-                } else {
-                    bytes[i] = (byte) 255;
+                    bytes[i] = (byte)ch;
+                }
+                else {
+                    bytes[i] = (byte)255;
                     hichars = true;
                 }
             }
@@ -612,9 +641,11 @@ public class BinaryWireFormat implements WireFormat {
             String ret = readString0(readBuffer);
             inTagList.add(ret);
             return ret;
-        } else if (num < size) {
-            return inTagList.get((int) num);
-        } else {
+        }
+        else if (num < size) {
+            return inTagList.get((int)num);
+        }
+        else {
             throw new StreamCorruptedException("Invalid tag num= " + num);
         }
     }
@@ -635,7 +666,7 @@ public class BinaryWireFormat implements WireFormat {
         boolean hichars = false;
 
         for (int i = 0; i < len; i++) {
-            final char ch = (char) (bytes[i] & 0xFF);
+            final char ch = (char)(bytes[i] & 0xFF);
             if (ch == 255) {
                 hichars = true;
             }
@@ -658,7 +689,7 @@ public class BinaryWireFormat implements WireFormat {
     public Object[] readArray(ByteBuffer rb) throws IOException {
         final Object o = readObject(rb);
         if (o instanceof Object[]) {
-            return (Object[]) o;
+            return (Object[])o;
         }
         throw new StreamCorruptedException("Expected an Array, got=" + o);
     }
@@ -670,17 +701,22 @@ public class BinaryWireFormat implements WireFormat {
         if (field.isPrimitive()) {
             if (type == boolean.class) {
                 field.setBoolean(pojo, readBoolean(rb));
-            } else if (type == byte.class || type == char.class || type == short.class || type == int.class || type == long.class) {
+            }
+            else if (type == byte.class || type == char.class || type == short.class || type == int.class
+                     || type == long.class) {
                 field.setNum(pojo, readNum(rb));
-            } else if (type == float.class || type == double.class) {
+            }
+            else if (type == float.class || type == double.class) {
                 field.setDouble(pojo, readDouble(rb));
-            } else {
+            }
+            else {
                 throw new NotSerializableException("Unknown primitive type " + type);
             }
-        } else {
-            T value = (T) readObject(rb);
+        }
+        else {
+            T value = (T)readObject(rb);
             if (!(value == null || type.isAssignableFrom(value.getClass()))) {
-                value = (T) Classes.parseAs(value, type);
+                value = (T)Classes.parseAs(value, type);
             }
             field.set(pojo, value);
         }
@@ -692,17 +728,21 @@ public class BinaryWireFormat implements WireFormat {
         if (field.isPrimitive()) {
             if (type == boolean.class) {
                 writeBoolean(wb, field.getBoolean(pojo));
-            } else if (type == byte.class || type == char.class || type == short.class || type == int.class || type == long.class) {
+            }
+            else if (type == byte.class || type == char.class || type == short.class || type == int.class
+                     || type == long.class) {
                 writeNum(wb, field.getNum(pojo));
-            } else if (type == float.class || type == double.class) {
+            }
+            else if (type == float.class || type == double.class) {
                 writeDouble(wb, field.getDouble(pojo));
-            } else {
+            }
+            else {
                 throw new NotSerializableException("Unknown primitive type " + type);
             }
-        } else {
+        }
+        else {
             T object = field.get(pojo);
-            if (object == pojo)
-                object = null;
+            if (object == pojo) object = null;
             writeObject(wb, object);
         }
     }

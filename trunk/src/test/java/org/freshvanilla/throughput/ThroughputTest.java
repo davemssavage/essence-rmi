@@ -13,9 +13,9 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
+
 package org.freshvanilla.throughput;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Formatter;
@@ -79,10 +79,11 @@ public class ThroughputTest extends AbstractTestCase {
             }
         }
 
-        LOG.info(new Formatter().format("The geo-mean throughput was %,d msg/s", (int) Math.pow(product, 1.0 / count)).toString());
+        LOG.info(new Formatter().format("The geo-mean throughput was %,d msg/s",
+            (int)Math.pow(product, 1.0 / count)).toString());
 
         client2.close();
-        ((Closeable) client).close();
+        closeClient(client);
     }
 
     private static long doSyncTest(AsyncEchoService client, int messageSize, int messages, boolean print) {
@@ -98,18 +99,20 @@ public class ThroughputTest extends AbstractTestCase {
 
         if (print) {
             long rate = messages * 1000L * 1000 * 1000 / time;
-            LOG.debug(new Formatter().format("Sync messages, size %,d, bandwidth= %4.1f MB/s, rate= %,d msg/s",
-                    messageSize,
-                    messageSize * messages * 1000.0 * 1000 * 1000 / time / 1024 / 1024,
-                    rate).toString());
+            LOG.debug(new Formatter().format(
+                "Sync messages, size %,d, bandwidth= %4.1f MB/s, rate= %,d msg/s", messageSize,
+                messageSize * messages * 1000.0 * 1000 * 1000 / time / 1024 / 1024, rate).toString());
             return rate;
         }
 
         return 1;
     }
 
-    private static long doAsyncTest(String type, AsyncEchoService client, final int messageSize,
-                                    int messages, boolean print) throws InterruptedException {
+    private static long doAsyncTest(String type,
+                                    AsyncEchoService client,
+                                    final int messageSize,
+                                    int messages,
+                                    boolean print) throws InterruptedException {
         byte[] bytes = new byte[messageSize];
         final CountDownLatch counter = new CountDownLatch(messages);
 
@@ -135,10 +138,8 @@ public class ThroughputTest extends AbstractTestCase {
         if (print) {
             long rate = messages * 1000L * 1000 * 1000 / time;
             LOG.info(new Formatter().format("%s messages, size %,d, bandwidth= %4.1f MB/s, rate= %,d msg/s",
-                    type,
-                    messageSize,
-                    messageSize * messages * 1000.0 * 1000 * 1000 / time / 1024 / 1024,
-                    rate).toString());
+                type, messageSize, messageSize * messages * 1000.0 * 1000 * 1000 / time / 1024 / 1024, rate)
+                .toString());
             return rate;
         }
 
@@ -178,7 +179,8 @@ public class ThroughputTest extends AbstractTestCase {
             this.callback = (Callback<Object>)callback;
             try {
                 queue.put(objects);
-            } catch (InterruptedException e) {
+            }
+            catch (InterruptedException e) {
                 throw new AssertionError(e);
             }
         }
@@ -196,7 +198,8 @@ public class ThroughputTest extends AbstractTestCase {
                         for (Object result : results) {
                             try {
                                 callback.onCallback(result);
-                            } catch (Exception e) {
+                            }
+                            catch (Exception e) {
                                 throw new AssertionError(e);
                             }
                         }
@@ -214,7 +217,8 @@ public class ThroughputTest extends AbstractTestCase {
                     queue.drainTo(objects, batchSize - 1);
                     service.echo(objects, callback2);
                 }
-            } catch (Throwable t) {
+            }
+            catch (Throwable t) {
                 if (!executor.isShutdown()) {
                     t.printStackTrace();
                 }

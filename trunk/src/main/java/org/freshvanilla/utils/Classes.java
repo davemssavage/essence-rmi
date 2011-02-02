@@ -13,6 +13,7 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
+
 package org.freshvanilla.utils;
 
 import java.lang.annotation.Annotation;
@@ -57,34 +58,34 @@ public class Classes {
         Class<?> clazz2 = asWrapper(clazz);
         final Class<?> oClass = o.getClass();
         if (clazz2 == oClass || clazz2.isAssignableFrom(oClass)) {
-            return (T) o;
+            return (T)o;
         }
 
         // convert number
         if (Number.class.isAssignableFrom(clazz2)) {
             if (o instanceof Number) {
-                Number n = (Number) o;
-                if (clazz2 == Byte.class) return (T) (Byte) n.byteValue();
-                if (clazz2 == Short.class) return (T) (Short) n.shortValue();
-                if (clazz2 == Integer.class) return (T) (Integer) n.intValue();
-                if (clazz2 == Long.class) return (T) (Long) n.longValue();
-                if (clazz2 == Float.class) return (T) (Float) n.floatValue();
-                if (clazz2 == Double.class) return (T) (Double) n.doubleValue();
+                Number n = (Number)o;
+                if (clazz2 == Byte.class) return (T)(Byte)n.byteValue();
+                if (clazz2 == Short.class) return (T)(Short)n.shortValue();
+                if (clazz2 == Integer.class) return (T)(Integer)n.intValue();
+                if (clazz2 == Long.class) return (T)(Long)n.longValue();
+                if (clazz2 == Float.class) return (T)(Float)n.floatValue();
+                if (clazz2 == Double.class) return (T)(Double)n.doubleValue();
             }
 
             String asString = o.toString();
-            if (clazz2 == Byte.class) return (T) (Byte) Byte.parseByte(asString);
-            if (clazz2 == Short.class) return (T) (Short) Short.parseShort(asString);
-            if (clazz2 == Integer.class) return (T) (Integer) Integer.parseInt(asString);
-            if (clazz2 == Long.class) return (T) (Long) Long.parseLong(asString);
-            if (clazz2 == Float.class) return (T) (Float) Float.parseFloat(asString);
-            if (clazz2 == Double.class) return (T) (Double) Double.parseDouble(asString);
-            if (clazz2 == BigInteger.class) return (T) new BigInteger(asString);
-            if (clazz2 == BigDecimal.class) return (T) new BigDecimal(asString);
+            if (clazz2 == Byte.class) return (T)(Byte)Byte.parseByte(asString);
+            if (clazz2 == Short.class) return (T)(Short)Short.parseShort(asString);
+            if (clazz2 == Integer.class) return (T)(Integer)Integer.parseInt(asString);
+            if (clazz2 == Long.class) return (T)(Long)Long.parseLong(asString);
+            if (clazz2 == Float.class) return (T)(Float)Float.parseFloat(asString);
+            if (clazz2 == Double.class) return (T)(Double)Double.parseDouble(asString);
+            if (clazz2 == BigInteger.class) return (T)new BigInteger(asString);
+            if (clazz2 == BigDecimal.class) return (T)new BigDecimal(asString);
         }
 
         if (clazz == String.class) {
-            return (T) o.toString();
+            return (T)o.toString();
         }
 
         throw new ClassCastException("Unable to convert types from " + oClass + " to " + clazz2);
@@ -104,7 +105,8 @@ public class Classes {
             for (Method method : clazz.getMethods())
                 if (isPublicNonStatic(method)) {
                     method.setAccessible(true);
-                    methodList.add(new MetaMethod<Object>(method.getName(), method.getParameterTypes(), method));
+                    methodList.add(new MetaMethod<Object>(method.getName(), method.getParameterTypes(),
+                        method));
                 }
             CLASS_METHODS.put(clazz, methods = methodList.toArray(new MetaMethod[methodList.size()]));
         }
@@ -133,7 +135,8 @@ public class Classes {
         public Object invoke(T object, Object... args) throws InvocationTargetException {
             try {
                 return method.invoke(object, args);
-            } catch (IllegalAccessException e) {
+            }
+            catch (IllegalAccessException e) {
                 throw new AssertionError(e);
             }
         }

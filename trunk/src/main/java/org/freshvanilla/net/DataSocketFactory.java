@@ -13,6 +13,7 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
+
 package org.freshvanilla.net;
 
 import java.io.IOException;
@@ -27,7 +28,7 @@ import org.freshvanilla.utils.Factory;
 import org.freshvanilla.utils.VanillaResource;
 
 public class DataSocketFactory extends VanillaResource implements Factory<String, DataSocket> {
-    
+
     public static final int DEFAULT_MAXIMUM_MESSAGE_SIZE = 1024 * 1024;
 
     private final InetSocketAddress[] addresses;
@@ -72,12 +73,14 @@ public class DataSocketFactory extends VanillaResource implements Factory<String
             if (hostnamePort.length == 1) {
                 int port = Integer.parseInt(hostnamePort[0]);
                 addresses[i] = new InetSocketAddress(port);
-            } else {
+            }
+            else {
                 String hostname = hostnamePort[0];
                 int port = Integer.parseInt(hostnamePort[1]);
                 if (hostname.length() == 0 || "localhost".equals(hostname)) {
                     addresses[i] = new InetSocketAddress(port);
-                } else {
+                }
+                else {
                     addresses[i] = new InetSocketAddress(hostname, port);
                 }
             }
@@ -94,9 +97,13 @@ public class DataSocketFactory extends VanillaResource implements Factory<String
 
     public DataSocket acquire(String name) throws Exception {
         int count = 1;
-        WireFormat wireFormat = wireFormatBuilder == null ? new BinaryWireFormat() : wireFormatBuilder.create();
+        WireFormat wireFormat = wireFormatBuilder == null
+                        ? new BinaryWireFormat()
+                        : wireFormatBuilder.create();
         Map<String, Object> header = new LinkedHashMap<String, Object>(this.header);
-        long timeoutMS = this.timeoutMS < Long.MAX_VALUE ? System.currentTimeMillis() + this.timeoutMS : Long.MAX_VALUE;
+        long timeoutMS = this.timeoutMS < Long.MAX_VALUE
+                        ? System.currentTimeMillis() + this.timeoutMS
+                        : Long.MAX_VALUE;
         IOException lastException;
 
         do {
@@ -104,7 +111,8 @@ public class DataSocketFactory extends VanillaResource implements Factory<String
                 final InetSocketAddress remote = addresses[lastAddress];
                 SocketChannel channel = SocketChannel.open(remote);
                 return new VanillaDataSocket(name, remote, channel, wireFormat, header, maximumMessageSize);
-            } catch (IOException e) {
+            }
+            catch (IOException e) {
                 if (Thread.currentThread().isInterrupted()) {
                     throw e;
                 }
@@ -123,10 +131,12 @@ public class DataSocketFactory extends VanillaResource implements Factory<String
                 getLog().debug(name + ": unable to connect to any of " + Arrays.asList(addresses));
                 Thread.sleep(2500);
                 count = 0;
-            } else {
+            }
+            else {
                 count++;
             }
-        } while (System.currentTimeMillis() < timeoutMS);
+        }
+        while (System.currentTimeMillis() < timeoutMS);
 
         throw lastException;
     }

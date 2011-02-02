@@ -13,6 +13,7 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
+
 package org.freshvanilla.net;
 
 import java.util.Map;
@@ -37,9 +38,10 @@ public class DataSockets {
         synchronized (MANAGER) {
             ScheduledExecutorService service = MANAGER.get();
             if (service == null || service.isShutdown()) {
-                MANAGER.set(service = Executors.newSingleThreadScheduledExecutor(
-                        new NamedThreadFactory("data-socket-manager", Thread.NORM_PRIORITY, true)));
-                service.scheduleAtFixedRate(new DataSocketsChecker(), CHECK_PERIOD_MS, CHECK_PERIOD_MS, TimeUnit.MILLISECONDS);
+                MANAGER.set(service = Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory(
+                    "data-socket-manager", Thread.NORM_PRIORITY, true)));
+                service.scheduleAtFixedRate(new DataSocketsChecker(), CHECK_PERIOD_MS, CHECK_PERIOD_MS,
+                    TimeUnit.MILLISECONDS);
             }
         }
         DATA_SOCKETS.put(ds, "");
@@ -48,15 +50,13 @@ public class DataSockets {
     public static void unregisterDataSocket(DataSocket ds) {
         DATA_SOCKETS.remove(ds);
         synchronized (MANAGER) {
-            if (DATA_SOCKETS.isEmpty())
-                reset();
+            if (DATA_SOCKETS.isEmpty()) reset();
         }
     }
 
     public static void reset() {
         ScheduledExecutorService service = MANAGER.getAndSet(null);
-        if (service != null)
-            service.shutdownNow();
+        if (service != null) service.shutdownNow();
         for (DataSocket dataSocket : DATA_SOCKETS.keySet())
             dataSocket.close();
         DATA_SOCKETS.clear();
@@ -67,8 +67,7 @@ public class DataSockets {
             long now = System.currentTimeMillis();
             for (DataSocket dataSocket : DATA_SOCKETS.keySet()) {
                 dataSocket.timedCheck(now);
-                if (dataSocket.isClosed())
-                    DATA_SOCKETS.remove(dataSocket);
+                if (dataSocket.isClosed()) DATA_SOCKETS.remove(dataSocket);
             }
         }
     }
