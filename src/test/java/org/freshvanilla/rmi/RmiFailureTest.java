@@ -13,6 +13,7 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
+
 package org.freshvanilla.rmi;
 
 import java.io.IOException;
@@ -33,7 +34,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class RmiFailureTest extends AbstractTestCase {
-    
+
     private static final Logger LOG = LoggerFactory.getLogger(RmiFailureTest.class.getName());
 
     interface Server {
@@ -96,27 +97,30 @@ public class RmiFailureTest extends AbstractTestCase {
             }
 
             for (int i = 10; i <= 110; i++) {
-                assertEquals(i, (int) cq.take(1000));
+                assertEquals(i, (int)cq.take(1000));
             }
 
             try {
                 client.throwsRuntimeException();
                 fail("Expected UnsupportedOperationException");
-            } catch (UnsupportedOperationException expected) {
+            }
+            catch (UnsupportedOperationException expected) {
                 // expected
             }
 
             try {
                 client.throwsException();
                 fail("Expected BackingStoreException");
-            } catch (BackingStoreException expected) {
+            }
+            catch (BackingStoreException expected) {
                 // expected
             }
 
             try {
                 client.serverDoesntImpliment();
                 fail("Expected UnsupportedOperationException");
-            } catch (UnsupportedOperationException expected) {
+            }
+            catch (UnsupportedOperationException expected) {
                 // expected
             }
 
@@ -124,7 +128,8 @@ public class RmiFailureTest extends AbstractTestCase {
                 CallbackQueue<Void> cq2 = new CallbackQueue<Void>();
                 client.serverDoesntImpliment(cq2);
                 fail("Expected UnsupportedOperationException, got= " + cq2.take(1000));
-            } catch (UnsupportedOperationException expected) {
+            }
+            catch (UnsupportedOperationException expected) {
                 // expected
             }
 
@@ -133,22 +138,28 @@ public class RmiFailureTest extends AbstractTestCase {
                 client.serverDoesntImpliment(callback);
                 callback.take(1000);
                 fail("Expected UnsupportedOperationException");
-            } catch (UnsupportedOperationException expected) {
+            }
+            catch (UnsupportedOperationException expected) {
                 // expected
             }
 
             assertEquals(10.0, client.add(1.5, 9.5));
             assertEquals(7.0, client.add(2.0, 5.0));
             assertEquals("Hi there", client.concat("Hi", client.concat(" ", "there")));
-            assertEquals(new BigInteger("1234567890"), client.concat(new BigInteger("12345"), new BigInteger("67890")));
+            assertEquals(new BigInteger("1234567890"),
+                client.concat(new BigInteger("12345"), new BigInteger("67890")));
 
             try {
                 fail("Expected UnsupportedOperationException, got= " + client.concat("Hi", " ", "there"));
-            } catch (UnsupportedOperationException expected) {
+            }
+            catch (UnsupportedOperationException expected) {
                 // expected
             }
-        } finally {
-            if (factory != null) factory.close();
+        }
+        finally {
+            if (factory != null) {
+                factory.close();
+            }
             server.close();
         }
     }
@@ -163,11 +174,15 @@ public class RmiFailureTest extends AbstractTestCase {
 
             try {
                 fail("Expected UndeclaredThrowableException, got= " + client.add(1, 2));
-            } catch (UndeclaredThrowableException expected) {
+            }
+            catch (UndeclaredThrowableException expected) {
                 assertEquals(java.net.ConnectException.class, expected.getCause().getClass());
             }
-        } finally {
-            if (factory != null) factory.close();
+        }
+        finally {
+            if (factory != null) {
+                factory.close();
+            }
         }
     }
 
@@ -176,7 +191,8 @@ public class RmiFailureTest extends AbstractTestCase {
         CachedDataSocketFactory factory = null;
 
         try {
-            factory = new CachedDataSocketFactory("mx-client", "localhost:54321,localhost:" + server.getPort(), 5000L);
+            factory = new CachedDataSocketFactory("mx-client", "localhost:54321,localhost:"
+                                                               + server.getPort(), 5000L);
             @SuppressWarnings("unchecked")
             FaultyClient client = Proxies.newClient(factory, FaultyClient.class);
             @SuppressWarnings("unchecked")
@@ -220,10 +236,11 @@ public class RmiFailureTest extends AbstractTestCase {
             Arrays.sort(testResults);
 
             for (int i : new int[]{50, 75, 80, 85, 90, 92, 95, 98, 99}) {
-                LOG.info(i + " % - " + testResults[(int)(0.5 + testResults.length * i / 100.0)]
-                                   / 100 / 10.0 + " micro-second per call.");
+                LOG.info(i + " % - " + testResults[(int)(0.5 + testResults.length * i / 100.0)] / 100 / 10.0
+                         + " micro-second per call.");
             }
-        } finally {
+        }
+        finally {
             if (factory != null) {
                 factory.close();
             }
@@ -236,7 +253,8 @@ public class RmiFailureTest extends AbstractTestCase {
         CachedDataSocketFactory factory = null;
 
         try {
-            factory = new CachedDataSocketFactory("mx-client", "localhost:54321,localhost:" + server.getPort(), 5000L);
+            factory = new CachedDataSocketFactory("mx-client", "localhost:54321,localhost:"
+                                                               + server.getPort(), 5000L);
             @SuppressWarnings("unchecked")
             FaultyClient client = Proxies.newClient(factory, FaultyClient.class);
             @SuppressWarnings("unchecked")
@@ -284,8 +302,8 @@ public class RmiFailureTest extends AbstractTestCase {
                 }
 
                 for (int i = 0; i < len; i++) {
-                    assertEquals(2 + i, (int) cq.take(1000));
-                    assertEquals(17 + i, (int) cq2.take(1000));
+                    assertEquals(2 + i, (int)cq.take(1000));
+                    assertEquals(17 + i, (int)cq2.take(1000));
                 }
 
                 Thread.sleep(1);
@@ -298,10 +316,10 @@ public class RmiFailureTest extends AbstractTestCase {
 
             for (int i : new int[]{50, 75, 80, 85, 90, 92, 95, 98, 99}) {
                 LOG.info(i + " % - " + 2 * 1000 * 1000 * 1000
-                                   / testResults[(int)(0.5 + testResults.length * i / 100.0)]
-                                   + " per second.");
+                         / testResults[(int)(0.5 + testResults.length * i / 100.0)] + " per second.");
             }
-        } finally {
+        }
+        finally {
             if (factory != null) {
                 factory.close();
             }
@@ -333,16 +351,17 @@ public class RmiFailureTest extends AbstractTestCase {
 
             try {
                 o = queue.poll(timeoutMS, TimeUnit.MILLISECONDS);
-            } catch (InterruptedException e) {
+            }
+            catch (InterruptedException e) {
                 throw new AssertionError(e);
             }
 
             if (o instanceof RuntimeException) {
-                throw ((RuntimeException) o);
+                throw ((RuntimeException)o);
             }
 
             if (o instanceof Error) {
-                throw ((Error) o);
+                throw ((Error)o);
             }
 
             if (o instanceof Throwable) {

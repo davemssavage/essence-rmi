@@ -13,11 +13,38 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
+
 package org.freshvanilla.test;
+
+import java.io.Closeable;
+import java.io.IOException;
+import java.lang.reflect.Proxy;
 
 import junit.framework.TestCase;
 
+import org.freshvanilla.rmi.VanillaRmiServer;
+
 public abstract class AbstractTestCase extends TestCase {
+
+    public static void closeClient(Object proxy) {
+        if (proxy != null) {
+            try {
+                Object closeable = Proxy.getInvocationHandler(proxy);
+                if (closeable instanceof Closeable) {
+                    ((Closeable)closeable).close();
+                }
+            }
+            catch (IOException ioex) {
+                throw new RuntimeException(ioex);
+            }
+        }
+    }
+
+    public static void closeServer(VanillaRmiServer<?> server) {
+        if (server != null) {
+            server.close();
+        }
+    }
 
     protected AbstractTestCase() {
         // nothing here

@@ -13,18 +13,15 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
+
 package org.freshvanilla.rmi;
 
 import java.io.IOException;
 import java.lang.reflect.Proxy;
-import java.util.Arrays;
-import java.util.LinkedHashSet;
-import java.util.Set;
 
 import org.freshvanilla.net.CachedDataSocketFactory;
 import org.freshvanilla.net.DataSocket;
 import org.freshvanilla.utils.Factory;
-import org.freshvanilla.utils.SimpleResource;
 
 public class Proxies {
 
@@ -37,18 +34,16 @@ public class Proxies {
     }
 
     public static <I> I newClient(String name, String connectionString, Class<I>... interfaces) {
-        final Factory<String, DataSocket> factory = new CachedDataSocketFactory(name, connectionString, 60 * 1000L);
+        Factory<String, DataSocket> factory = new CachedDataSocketFactory(name, connectionString, 60 * 1000L);
         return newClient(factory, true, interfaces);
     }
 
-    public static <I> I newClient(Factory<String, DataSocket> factory, boolean closeFactory, Class<I>... interfaces) {
-        Set<Class<?>> interfaceSet = new LinkedHashSet<Class<?>>(Arrays.asList(interfaces));
-        interfaceSet.add(SimpleResource.class);
-        final Class<?>[] interfaces2 = interfaceSet.toArray(new Class<?>[interfaceSet.size()]);
-
-        final RmiInvocationHandler rmiih = new RmiInvocationHandler(factory, closeFactory);
+    public static <I> I newClient(Factory<String, DataSocket> factory,
+                                  boolean closeFactory,
+                                  Class<I>... interfaces) {
+        RmiInvocationHandler rmiih = new RmiInvocationHandler(factory, closeFactory);
         @SuppressWarnings("unchecked")
-        I proxy = (I)Proxy.newProxyInstance(Thread.currentThread().getContextClassLoader(), interfaces2, rmiih);
+        I proxy = (I)Proxy.newProxyInstance(Thread.currentThread().getContextClassLoader(), interfaces, rmiih);
         return proxy;
     }
 

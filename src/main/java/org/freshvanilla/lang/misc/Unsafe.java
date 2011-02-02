@@ -13,6 +13,7 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
+
 package org.freshvanilla.lang.misc;
 
 import java.lang.reflect.Field;
@@ -28,8 +29,9 @@ public class Unsafe {
         try {
             Field field = sun.misc.Unsafe.class.getDeclaredField("theUnsafe");
             field.setAccessible(true);
-            unsafe = (sun.misc.Unsafe) field.get(null);
-        } catch (Exception e) {
+            unsafe = (sun.misc.Unsafe)field.get(null);
+        }
+        catch (Exception e) {
             throw new AssertionError(e);
         }
     }
@@ -41,7 +43,7 @@ public class Unsafe {
 
     @SuppressWarnings("unchecked")
     public static <T> T newInstance(Class<T> clazz) throws InstantiationException {
-        return (T) unsafe.allocateInstance(clazz);
+        return (T)unsafe.allocateInstance(clazz);
     }
 
     public interface FieldAccessor<T> {
@@ -62,7 +64,7 @@ public class Unsafe {
         public <Pojo> void setDouble(Pojo pojo, double value);
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings("rawtypes")
     public static FieldAccessor getFieldAccessor(Field field) {
         Class<?> type = field.getType();
         final long offset = unsafe.objectFieldOffset(field);
@@ -170,15 +172,15 @@ public class Unsafe {
         }
 
         public <Pojo> void setBoolean(Pojo pojo, boolean flag) {
-            unsafe.putByte(pojo, offset, (byte) (flag ? 1 : 0));
+            unsafe.putByte(pojo, offset, (byte)(flag ? 1 : 0));
         }
 
         public <Pojo> void setNum(Pojo pojo, long value) {
-            unsafe.putByte(pojo, offset, (byte) value);
+            unsafe.putByte(pojo, offset, (byte)value);
         }
 
         public <Pojo> void setDouble(Pojo pojo, double value) {
-            unsafe.putByte(pojo, offset, (byte) value);
+            unsafe.putByte(pojo, offset, (byte)value);
         }
     }
 
@@ -210,15 +212,15 @@ public class Unsafe {
         }
 
         public <Pojo> void setBoolean(Pojo pojo, boolean value) {
-            unsafe.putChar(pojo, offset, (char) (value ? 1 : 0));
+            unsafe.putChar(pojo, offset, (char)(value ? 1 : 0));
         }
 
         public <Pojo> void setNum(Pojo pojo, long value) {
-            unsafe.putChar(pojo, offset, (char) value);
+            unsafe.putChar(pojo, offset, (char)value);
         }
 
         public <Pojo> void setDouble(Pojo pojo, double value) {
-            unsafe.putChar(pojo, offset, (char) value);
+            unsafe.putChar(pojo, offset, (char)value);
         }
     }
 
@@ -250,15 +252,15 @@ public class Unsafe {
         }
 
         public <Pojo> void setBoolean(Pojo pojo, boolean value) {
-            unsafe.putShort(pojo, offset, (short) (value ? 1 : 0));
+            unsafe.putShort(pojo, offset, (short)(value ? 1 : 0));
         }
 
         public <Pojo> void setNum(Pojo pojo, long value) {
-            unsafe.putShort(pojo, offset, (short) value);
+            unsafe.putShort(pojo, offset, (short)value);
         }
 
         public <Pojo> void setDouble(Pojo pojo, double value) {
-            unsafe.putShort(pojo, offset, (short) value);
+            unsafe.putShort(pojo, offset, (short)value);
         }
     }
 
@@ -294,11 +296,11 @@ public class Unsafe {
         }
 
         public <Pojo> void setNum(Pojo pojo, long value) {
-            unsafe.putInt(pojo, offset, (int) value);
+            unsafe.putInt(pojo, offset, (int)value);
         }
 
         public <Pojo> void setDouble(Pojo pojo, double value) {
-            unsafe.putInt(pojo, offset, (int) value);
+            unsafe.putInt(pojo, offset, (int)value);
         }
     }
 
@@ -318,7 +320,7 @@ public class Unsafe {
         }
 
         public <Pojo> long getNum(Pojo pojo) {
-            return (long) unsafe.getFloat(pojo, offset);
+            return (long)unsafe.getFloat(pojo, offset);
         }
 
         public <Pojo> double getDouble(Pojo pojo) {
@@ -338,7 +340,7 @@ public class Unsafe {
         }
 
         public <Pojo> void setDouble(Pojo pojo, double value) {
-            unsafe.putFloat(pojo, offset, (float) value);
+            unsafe.putFloat(pojo, offset, (float)value);
         }
     }
 
@@ -378,7 +380,7 @@ public class Unsafe {
         }
 
         public <Pojo> void setDouble(Pojo pojo, double value) {
-            unsafe.putLong(pojo, offset, (long) value);
+            unsafe.putLong(pojo, offset, (long)value);
         }
     }
 
@@ -398,7 +400,7 @@ public class Unsafe {
         }
 
         public <Pojo> long getNum(Pojo pojo) {
-            return (long) unsafe.getDouble(pojo, offset);
+            return (long)unsafe.getDouble(pojo, offset);
         }
 
         public <Pojo> double getDouble(Pojo pojo) {
@@ -439,15 +441,13 @@ public class Unsafe {
 
         public <Pojo> long getNum(Pojo pojo) {
             Object obj = unsafe.getObject(pojo, offset);
-            if (obj instanceof Number)
-                return ((Number) obj).longValue();
+            if (obj instanceof Number) return ((Number)obj).longValue();
             throw new AssertionError("Cannot convert " + obj + " to long.");
         }
 
         public <Pojo> double getDouble(Pojo pojo) {
             Object obj = unsafe.getObject(pojo, offset);
-            if (obj instanceof Number)
-                return ((Number) obj).doubleValue();
+            if (obj instanceof Number) return ((Number)obj).doubleValue();
             throw new AssertionError("Cannot convert " + obj + " to double.");
         }
 

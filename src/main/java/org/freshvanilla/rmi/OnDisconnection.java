@@ -13,6 +13,7 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
+
 package org.freshvanilla.rmi;
 
 import java.lang.annotation.Documented;
@@ -23,9 +24,9 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Marks a method as being called on disconnection rather than immedately.
- * The result of the method is ignored.
- * Note: due to a limitation in Java you must put this annotation in each implementation of the method, not just at the interface level. :P
+ * Marks a method as being called on disconnection rather than immedately. The result of
+ * the method is ignored. Note: due to a limitation in Java you must put this annotation
+ * in each implementation of the method, not just at the interface level. :P
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)

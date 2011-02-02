@@ -13,6 +13,7 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
+
 package org.freshvanilla.rmi;
 
 import java.io.EOFException;
@@ -32,9 +33,9 @@ import org.freshvanilla.net.DataSocketHandler;
 import org.freshvanilla.net.VanillaDataServerSocket;
 import org.freshvanilla.net.WireFormat;
 import org.freshvanilla.utils.Classes;
+import org.freshvanilla.utils.Classes.MetaMethod;
 import org.freshvanilla.utils.Factory;
 import org.freshvanilla.utils.VanillaResource;
-import org.freshvanilla.utils.Classes.MetaMethod;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -83,8 +84,7 @@ public class VanillaRmiServer<P> extends VanillaResource implements Factory<Data
     class RmiDataSocketHandler extends VanillaResource implements DataSocketHandler {
         private final DataSocket ds;
         private final WireFormat wf;
-        private final Set<OnDisconnectionRunnable> onDisconnection =
-                new LinkedHashSet<OnDisconnectionRunnable>();
+        private final Set<OnDisconnectionRunnable> onDisconnection = new LinkedHashSet<OnDisconnectionRunnable>();
 
         private RmiDataSocketHandler(String name, DataSocket ds) {
             super(name);
@@ -103,7 +103,7 @@ public class VanillaRmiServer<P> extends VanillaResource implements Factory<Data
             // TODO: why is this empty?
         }
 
-        @SuppressWarnings("unchecked")
+        @SuppressWarnings({"unchecked", "rawtypes"})
         public void onMessage() throws IOException {
             long sequenceNumber = 0;
             boolean okay = false;
@@ -123,15 +123,18 @@ public class VanillaRmiServer<P> extends VanillaResource implements Factory<Data
 
                 if (method.getAnnotation(OnDisconnection.class) == null) {
                     result = ((MetaMethod)method).invoke(provider, args);
-                } else {
+                }
+                else {
                     onDisconnection.add(new OnDisconnectionRunnable(method, args));
                     result = null;
                 }
 
                 okay = true;
-            } catch (InvocationTargetException e) {
+            }
+            catch (InvocationTargetException e) {
                 result = e.getCause();
-            } catch (Exception e) {
+            }
+            catch (Exception e) {
                 if (e.getClass() == IOException.class || e.getClass() == EOFException.class) {
                     LOG.debug(name + ": Dropping connection as client has disconnected " + e);
                     close();
@@ -147,7 +150,8 @@ public class VanillaRmiServer<P> extends VanillaResource implements Factory<Data
 
             try {
                 wf.flush(ds, wb);
-            } catch (IOException e) {
+            }
+            catch (IOException e) {
                 close();
                 if (result instanceof IOException) {
                     return;
@@ -162,7 +166,9 @@ public class VanillaRmiServer<P> extends VanillaResource implements Factory<Data
                     return method;
                 }
             }
-            throw new UnsupportedOperationException("Unable to find method " + methodName + " for " + provider.getClass() + " with " + args.length + " arguments.");
+            throw new UnsupportedOperationException("Unable to find method " + methodName + " for "
+                                                    + provider.getClass() + " with " + args.length
+                                                    + " arguments.");
         }
 
         public void onDisconnection() {
@@ -182,11 +188,12 @@ public class VanillaRmiServer<P> extends VanillaResource implements Factory<Data
             this.args = args;
         }
 
-        @SuppressWarnings("unchecked")
+        @SuppressWarnings({"unchecked", "rawtypes"})
         public void run() {
             try {
                 ((MetaMethod)method).invoke(provider, args);
-            } catch (InvocationTargetException e) {
+            }
+            catch (InvocationTargetException e) {
                 LOG.warn(name + ": Exception thrown on disconnect.", e.getCause());
             }
         }
@@ -196,8 +203,12 @@ public class VanillaRmiServer<P> extends VanillaResource implements Factory<Data
         }
 
         public boolean equals(Object obj) {
-            if (obj == null || obj.getClass() != getClass()) return false;
-            OnDisconnectionRunnable odr = (OnDisconnectionRunnable) obj;
+            if (obj == null || obj.getClass() != getClass()) {
+                return false;
+            }
+
+            @SuppressWarnings("unchecked")
+            OnDisconnectionRunnable odr = (OnDisconnectionRunnable)obj;
             return method.method.equals(odr.method.method) && Arrays.equals(args, odr.args);
         }
     }

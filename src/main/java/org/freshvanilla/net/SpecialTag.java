@@ -13,30 +13,10 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
+
 package org.freshvanilla.net;
 
 enum SpecialTag {
-    NULL,
-    TRUE,
-    FALSE,
-    SIGNED1,
-    BYTES,
-    SIGNED2,
-    SIGNED4,
-    SIGNED8,
-    CHAR,
-    FLOAT4,
-    FLOAT8,
-    ARRAY,
-    TAG,
-    STRING,
-    LIST,
-    SET,
-    MAP,
-    ENTRY,
-    ENUM,
-    SERIALIZABLE,
-    CLASS,
-    META_CLASS,
-    POJO
+    NULL, TRUE, FALSE, SIGNED1, BYTES, SIGNED2, SIGNED4, SIGNED8, CHAR, FLOAT4, FLOAT8, ARRAY, TAG, STRING,
+    LIST, SET, MAP, ENTRY, ENUM, SERIALIZABLE, CLASS, META_CLASS, POJO
 }

@@ -13,6 +13,7 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
+
 package org.freshvanilla.net;
 
 import java.io.EOFException;
@@ -62,16 +63,19 @@ public class VanillaDataSocket extends VanillaResource implements DataSocket {
     private long nextWriteWarningMS = 0;
 
     @SuppressWarnings("unchecked")
-    public VanillaDataSocket(String name, InetSocketAddress address,
-                             SocketChannel channel, WireFormat wireFormat,
-                             Map<String, Object> header, int maximumMessageSize) throws IOException {
+    public VanillaDataSocket(String name,
+                             InetSocketAddress address,
+                             SocketChannel channel,
+                             WireFormat wireFormat,
+                             Map<String, Object> header,
+                             int maximumMessageSize) throws IOException {
         super(name);
         this.address = address;
         this.channel = channel;
         channel.configureBlocking(true);
         Socket socket = channel.socket();
         socket.setTcpNoDelay(true);
-        socket.setTrafficClass(/*IPTOS_LOWDELAY*/0x10);
+        socket.setTrafficClass(/* IPTOS_LOWDELAY */0x10);
         socket.setSendBufferSize(BUFFER_SIZE);
         socket.setReceiveBufferSize(BUFFER_SIZE);
         this.wireFormat = wireFormat;
@@ -83,7 +87,7 @@ public class VanillaDataSocket extends VanillaResource implements DataSocket {
         wireFormat.writeObject(writeBuffer(), header);
         flush();
         final ByteBuffer rb = read();
-        otherHeader = (Map<String, Object>) wireFormat.readObject(rb);
+        otherHeader = (Map<String, Object>)wireFormat.readObject(rb);
         getLog().debug(name + ": connected to " + socket + ' ' + otherHeader);
     }
 
@@ -118,7 +122,8 @@ public class VanillaDataSocket extends VanillaResource implements DataSocket {
             if (executor1 != null) {
                 return;
             }
-            this.executor = Executors.newCachedThreadPool(new NamedThreadFactory(name + "-reply-listener", Thread.MAX_PRIORITY, true));
+            this.executor = Executors.newCachedThreadPool(new NamedThreadFactory(name + "-reply-listener",
+                Thread.MAX_PRIORITY, true));
             executor.submit(new ReaderRunnable(reader));
         }
     }
@@ -144,7 +149,8 @@ public class VanillaDataSocket extends VanillaResource implements DataSocket {
                 rb.limit(len);
                 readFully(rb);
             }
-        } finally {
+        }
+        finally {
             reading = false;
             readTimeMS = 0;
         }
@@ -170,7 +176,8 @@ public class VanillaDataSocket extends VanillaResource implements DataSocket {
             }
 
             Thread.yield();
-        } while (true);
+        }
+        while (true);
     }
 
     private void channelRead(ByteBuffer rb) throws IOException {
@@ -178,16 +185,18 @@ public class VanillaDataSocket extends VanillaResource implements DataSocket {
 
         try {
             len = channel.read(rb);
-        } catch (IOException e) {
+        }
+        catch (IOException e) {
             final String eStr = e.toString();
             if (!eStr.equals("java.io.IOException: An established connection was aborted by the software in your host machine")
-                    && !eStr.equals("java.nio.channels.AsynchronousCloseException")) {
+                && !eStr.equals("java.nio.channels.AsynchronousCloseException")) {
                 throw e;
             }
         }
 
         if (len < 0) {
-            throw new EOFException("An established connection was aborted by the software in your host machine");
+            throw new EOFException(
+                "An established connection was aborted by the software in your host machine");
         }
     }
 
@@ -218,7 +227,8 @@ public class VanillaDataSocket extends VanillaResource implements DataSocket {
         try {
             len = channel.write(wb);
 
-        } catch (IOException e) {
+        }
+        catch (IOException e) {
             Class<? extends IOException> eClass = e.getClass();
             if (eClass != IOException.class) {
                 throw e;
@@ -244,7 +254,8 @@ public class VanillaDataSocket extends VanillaResource implements DataSocket {
 
         try {
             writeFully(wb);
-        } finally {
+        }
+        finally {
             writing = false;
             writeTimeMS = 0;
         }
@@ -260,7 +271,8 @@ public class VanillaDataSocket extends VanillaResource implements DataSocket {
 
         try {
             channel.close();
-        } catch (IOException ignored) {
+        }
+        catch (IOException ignored) {
             // ignored.
         }
 
@@ -287,7 +299,8 @@ public class VanillaDataSocket extends VanillaResource implements DataSocket {
             while (!isClosed()) {
                 try {
                     reader.onCallback(VanillaDataSocket.this);
-                } catch (Exception e) {
+                }
+                catch (Exception e) {
                     if (isClosed()) {
                         return;
                     }
@@ -306,14 +319,16 @@ public class VanillaDataSocket extends VanillaResource implements DataSocket {
             if (readTimeMS == 0) {
                 readTimeMS = timeMS;
                 nextReadWarningMS = timeMS + WARNING_PERIOD;
-            } else if (timeMS >= nextReadWarningMS) {
+            }
+            else if (timeMS >= nextReadWarningMS) {
                 final long totalWriteTimeMS = timeMS - readTimeMS;
                 if (totalWriteTimeMS > TIMEOUT_MS) {
                     if (LOG.isDebugEnabled()) {
                         LOG.debug(name + ": closing reading connection after " + totalWriteTimeMS + " ms");
                     }
                     close();
-                } else {
+                }
+                else {
                     if (LOG.isDebugEnabled()) {
                         LOG.debug(name + ": waiting for long running read " + totalWriteTimeMS + " ms");
                     }
@@ -326,14 +341,16 @@ public class VanillaDataSocket extends VanillaResource implements DataSocket {
             if (writeTimeMS == 0) {
                 writeTimeMS = timeMS;
                 nextWriteWarningMS = timeMS + WARNING_PERIOD;
-            } else if (timeMS >= nextWriteWarningMS) {
+            }
+            else if (timeMS >= nextWriteWarningMS) {
                 final long totalWriteTimeMS = timeMS - writeTimeMS;
                 if (totalWriteTimeMS > TIMEOUT_MS) {
                     if (LOG.isDebugEnabled()) {
                         LOG.debug(name + ": closing writing connection after " + totalWriteTimeMS + " ms");
                     }
                     close();
-                } else {
+                }
+                else {
                     if (LOG.isDebugEnabled()) {
                         LOG.debug(name + ": waiting for long running write " + totalWriteTimeMS + " ms");
                     }
@@ -344,4 +361,3 @@ public class VanillaDataSocket extends VanillaResource implements DataSocket {
     }
 
 }
-

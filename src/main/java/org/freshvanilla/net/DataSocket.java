@@ -38,9 +38,9 @@ public interface DataSocket extends SimpleResource {
     public void flush() throws IOException;
 
     public void addCallback(long sequenceNumber, Callback<?> callback);
-    
+
     public Callback<?> removeCallback(long sequenceNumber);
-    
+
     public void setReader(Callback<DataSocket> reader);
 
     public Map<String, Object> getOtherHeader();

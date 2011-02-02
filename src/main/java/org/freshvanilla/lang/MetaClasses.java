@@ -13,6 +13,7 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
+
 package org.freshvanilla.lang;
 
 import java.util.Arrays;
@@ -22,15 +23,15 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-@SuppressWarnings("unchecked")
+@SuppressWarnings({"unchecked", "rawtypes"})
 public class MetaClasses {
 
     private static final Map<String, MetaClass> NAME_META_CLASS_MAP = new ConcurrentHashMap<String, MetaClass>();
     private static final Map<String, Throwable> NO_CLASS_SET = new ConcurrentHashMap<String, Throwable>();
     private static final Map<Class<?>, MetaClass> META_CLASS_MAP = new ConcurrentHashMap<Class<?>, MetaClass>();
-    private static final Set<Class<?>> PRIMITIVES =
-            new LinkedHashSet<Class<?>>(Arrays.asList(new Class<?>[]{
-                    boolean.class, byte.class, char.class, short.class, int.class, float.class, double.class, long.class}));
+    private static final Set<Class<?>> PRIMITIVES = new LinkedHashSet<Class<?>>(
+        Arrays.asList(new Class<?>[]{boolean.class, byte.class, char.class, short.class, int.class,
+            float.class, double.class, long.class}));
 
     private MetaClasses() {
         // not used
@@ -43,12 +44,11 @@ public class MetaClasses {
     public static <T> MetaClass<T> acquireMetaClass(final String classDescription) {
         MetaClass<T> metaClass = NAME_META_CLASS_MAP.get(classDescription);
         if (metaClass == null) {
-            if (NO_CLASS_SET.containsKey(classDescription))
-                return null;
+            if (NO_CLASS_SET.containsKey(classDescription)) return null;
             String[] parts = classDescription.split(",");
             String clazz2 = parts[0];
             try {
-                metaClass = acquireMetaClass((Class) Class.forName(clazz2));
+                metaClass = acquireMetaClass((Class)Class.forName(clazz2));
                 MetaField<T, ?>[] metaFields = metaClass.fields();
                 boolean okay = false;
                 if (metaFields.length == parts.length - 1) {
@@ -61,10 +61,10 @@ public class MetaClasses {
                         }
                     }
                 }
-                if (!okay)
-                    metaClass = new VirtualClass(metaClass, classDescription, parts);
+                if (!okay) metaClass = new VirtualClass(metaClass, classDescription, parts);
                 NAME_META_CLASS_MAP.put(classDescription, metaClass);
-            } catch (ClassNotFoundException e) {
+            }
+            catch (ClassNotFoundException e) {
                 NO_CLASS_SET.put(classDescription, e);
             }
         }
@@ -83,7 +83,7 @@ public class MetaClasses {
         if (pojo1 == null) return pojo2 == null;
         if (pojo2 == null) return false;
         if (pojo1 == pojo2) return true;
-        final Class<Pojo1> pojoClass = (Class<Pojo1>) pojo1.getClass();
+        final Class<Pojo1> pojoClass = (Class<Pojo1>)pojo1.getClass();
         final MetaClass<Pojo1> metaClass = acquireMetaClass(pojoClass);
         if (metaClass.definesEquals()) {
             return pojo1.equals(pojo2);
@@ -99,7 +99,7 @@ public class MetaClasses {
 
     public static <Pojo> Map<String, Object> asMap(Pojo pojo) {
         if (pojo == null) return null;
-        MetaClass<Pojo> metaClass = acquireMetaClass((Class<Pojo>) pojo.getClass());
+        MetaClass<Pojo> metaClass = acquireMetaClass((Class<Pojo>)pojo.getClass());
         MetaField<Pojo, ?>[] metaFields = metaClass.fields();
         Map<String, Object> ret = new LinkedHashMap<String, Object>(metaFields.length * 2);
         for (MetaField<Pojo, ?> field : metaFields) {
@@ -116,7 +116,7 @@ public class MetaClasses {
     public static <Pojo> int hashCodeFor(Pojo pojo) {
         if (pojo == null) return 0;
         int hash = 0;
-        MetaClass<Pojo> metaClass = acquireMetaClass((Class<Pojo>) pojo.getClass());
+        MetaClass<Pojo> metaClass = acquireMetaClass((Class<Pojo>)pojo.getClass());
 
         for (MetaField field : metaClass.fields()) {
             int fieldHash = field.getName().hashCode();

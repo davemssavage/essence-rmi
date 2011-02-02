@@ -13,6 +13,7 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
+
 package org.freshvanilla.lang;
 
 import java.lang.reflect.Field;
@@ -53,7 +54,7 @@ public class VanillaClass<T> implements MetaClass<T> {
         return fieldMap.values().toArray(new MetaField[fieldMap.size()]);
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
     private static <T> void getFieldsForSerialization0(Map<String, MetaField<T, ?>> fieldMap, Class<?> clazz) {
         if (clazz == null || clazz == Object.class) return;
         getFieldsForSerialization0(fieldMap, clazz.getSuperclass());

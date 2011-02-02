@@ -13,6 +13,7 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
+
 package org.freshvanilla.net;
 
 import java.io.IOException;
@@ -41,15 +42,19 @@ public class DetectBlockedTest extends AbstractTestCase {
                     final SocketChannel sc = ssc.accept();
                     Thread.sleep(3 * 1000);
                     final BinaryWireFormat wf = new BinaryWireFormat();
-                    ds = new VanillaDataSocket("test", null, sc, wf, new LinkedHashMap<String, Object>(), 1024 * 1024);
+                    ds = new VanillaDataSocket("test", null, sc, wf, new LinkedHashMap<String, Object>(),
+                        1024 * 1024);
                     Thread.sleep(30 * 1000);
                     fail();
-                } catch (InterruptedException expected) {
+                }
+                catch (InterruptedException expected) {
                     // expected
-                } catch (Exception e) {
+                }
+                catch (Exception e) {
                     // let the test fail
                     throw new RuntimeException(e);
-                } finally {
+                }
+                finally {
                     if (ds != null) {
                         ds.close();
                     }
@@ -64,7 +69,8 @@ public class DetectBlockedTest extends AbstractTestCase {
         sc.socket().connect(isa);
 
         final BinaryWireFormat wf = new BinaryWireFormat();
-        DataSocket ds = new VanillaDataSocket("test", isa, sc, wf, new LinkedHashMap<String, Object>(), 1024 * 1024);
+        DataSocket ds = new VanillaDataSocket("test", isa, sc, wf, new LinkedHashMap<String, Object>(),
+            1024 * 1024);
 
         try {
             for (int i = 0; i < 1000; i++) {
@@ -72,7 +78,8 @@ public class DetectBlockedTest extends AbstractTestCase {
                 wf.writeObject(buffer, new byte[100 * 1000]);
                 ds.flush();
             }
-        } catch (ClosedChannelException expected) {
+        }
+        catch (ClosedChannelException expected) {
             // expected.
         }
 
