@@ -22,9 +22,13 @@ import java.lang.reflect.Proxy;
 
 import junit.framework.TestCase;
 
+import org.freshvanilla.lang.MetaClasses;
 import org.freshvanilla.rmi.VanillaRmiServer;
+import org.freshvanilla.utils.Classes;
 
 public abstract class AbstractTestCase extends TestCase {
+
+    private final MetaClasses _metaClasses = new MetaClasses(Classes.getClassLoader(getClass()));
 
     public static void closeClient(Object proxy) {
         if (proxy != null) {
@@ -46,16 +50,12 @@ public abstract class AbstractTestCase extends TestCase {
         }
     }
 
-    protected AbstractTestCase() {
-        // nothing here
-    }
-
-    protected AbstractTestCase(String name) {
-        super(name);
-    }
-
     public boolean isFullBuild() {
         return Boolean.getBoolean("full.build");
+    }
+
+    public MetaClasses getMetaClasses() {
+        return _metaClasses;
     }
 
 }

@@ -30,7 +30,7 @@ import org.freshvanilla.test.AbstractTestCase;
 
 public class RmiMapTest extends AbstractTestCase {
 
-    public static void test_map_over_rmi() throws IOException {
+    public void test_map_over_rmi() throws IOException {
         ConcurrentMap<Integer, PrimitivePojo> map = new ConcurrentHashMap<Integer, PrimitivePojo>();
 
         int size = 10;

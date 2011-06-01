@@ -85,7 +85,7 @@ public class RmiFailureTest extends AbstractTestCase {
         CachedDataSocketFactory factory = null;
 
         try {
-            factory = new CachedDataSocketFactory("mx-client", "localhost:" + server.getPort());
+            factory = new CachedDataSocketFactory("mx-client", "localhost:" + server.getPort(), getMetaClasses());
             @SuppressWarnings("unchecked")
             FaultyClient client = Proxies.newClient(factory, FaultyClient.class);
 
@@ -168,7 +168,7 @@ public class RmiFailureTest extends AbstractTestCase {
         CachedDataSocketFactory factory = null;
 
         try {
-            factory = new CachedDataSocketFactory("mx-client", "localhost:" + 12345, 5000L);
+            factory = new CachedDataSocketFactory("mx-client", "localhost:" + 12345, 5000L, getMetaClasses());
             @SuppressWarnings("unchecked")
             FaultyClient client = Proxies.newClient(factory, FaultyClient.class);
 
@@ -192,7 +192,7 @@ public class RmiFailureTest extends AbstractTestCase {
 
         try {
             factory = new CachedDataSocketFactory("mx-client", "localhost:54321,localhost:"
-                                                               + server.getPort(), 5000L);
+                                                               + server.getPort(), 5000L, getMetaClasses());
             @SuppressWarnings("unchecked")
             FaultyClient client = Proxies.newClient(factory, FaultyClient.class);
             @SuppressWarnings("unchecked")
@@ -254,7 +254,7 @@ public class RmiFailureTest extends AbstractTestCase {
 
         try {
             factory = new CachedDataSocketFactory("mx-client", "localhost:54321,localhost:"
-                                                               + server.getPort(), 5000L);
+                                                               + server.getPort(), 5000L, getMetaClasses());
             @SuppressWarnings("unchecked")
             FaultyClient client = Proxies.newClient(factory, FaultyClient.class);
             @SuppressWarnings("unchecked")

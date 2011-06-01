@@ -18,7 +18,6 @@ package org.freshvanilla.rmi;
 
 import java.io.Serializable;
 
-import org.freshvanilla.lang.AbstractPojo;
 
 public class PrimitivePojo extends AbstractPojo implements Serializable {
     private static final long serialVersionUID = 1L;

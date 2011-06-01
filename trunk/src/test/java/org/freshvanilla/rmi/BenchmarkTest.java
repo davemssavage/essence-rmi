@@ -50,7 +50,7 @@ public class BenchmarkTest extends AbstractTestCase {
             new Integer(i);
         }
         time = System.nanoTime() - start;
-        LOG.info("Integer construction time= " + (time / size) + " ns.");
+        LOG.info("Integer construction time = " + (time / size) + " ns.");
 
         PrimitivePojo[] list2 = new PrimitivePojo[size];
         start = System.nanoTime();
@@ -59,7 +59,7 @@ public class BenchmarkTest extends AbstractTestCase {
         }
         time = System.nanoTime() - start;
         assertNotNull(list2[0]);
-        LOG.info("PrimitivePojo add time= " + (time / size) + " ns.");
+        LOG.info("PrimitivePojo add time = " + (time / size) + " ns.");
 
         List<PrimitivePojo> primitivePojos = new ArrayList<PrimitivePojo>(size);
         List<WrapperPojo> wrapperPojos = new ArrayList<WrapperPojo>(size);
@@ -70,7 +70,7 @@ public class BenchmarkTest extends AbstractTestCase {
                 (double)i, String.valueOf(i)));
         }
         time = System.nanoTime() - start;
-        LOG.info("pojo construction time= " + (time / size / 2) + " ns.");
+        LOG.info("pojo construction time = " + (time / size / 2) + " ns.");
         assertEquals(size, primitivePojos.size());
 
         for (int i = 0; i <= 5; i++) {
@@ -82,7 +82,7 @@ public class BenchmarkTest extends AbstractTestCase {
             assertNotNull(listB);
             assertNotNull(list2B);
             if (i > 0) {
-                LOG.info(i + ": pojo Java serialization time= " + (time / size / 2) + " ns per pojo.");
+                LOG.info(i + ": pojo Java serialization time = " + (time / size / 2) + " ns per pojo.");
             }
         }
 
@@ -100,8 +100,8 @@ public class BenchmarkTest extends AbstractTestCase {
                 assertEquals(primitivePojos, listB);
                 assertEquals(wrapperPojos, list2B);
                 if (i > 0) {
-                    LOG.info(i + ": Latency for " + primitivePojos.size() + " pojos =" + NF.format(time / 4)
-                             + " ns. each way. per pojo=" + NF.format(time / size / 4));
+                    LOG.info(i + ": Latency for " + primitivePojos.size() + " pojos = " + NF.format(time / 4)
+                             + " ns. each way. per pojo = " + NF.format(time / size / 4));
                 }
             }
         }
@@ -151,7 +151,7 @@ public class BenchmarkTest extends AbstractTestCase {
             }
             long time = System.nanoTime() - start;
             long latency = time / RUNS / 9;
-            LOG.info("Average latency=" + NF.format(latency) + " ns.");
+            LOG.info("Average latency = " + NF.format(latency) + " ns.");
         }
         finally {
             closeClient(service);
@@ -281,13 +281,12 @@ public class BenchmarkTest extends AbstractTestCase {
             Collections.sort(list);
             Collections.sort(list2);
 
-            // give the timings compensating for the overhead of the org.freshvanilla.test
-            // itself.
-            LOG.info("Mid latency=" + NF.format(list.get(list.size() / 2) - list2.get(list2.size() / 2))
+            // give the timings compensation for the overhead of the test itself.
+            LOG.info("Mid latency = " + NF.format(list.get(list.size() / 2) - list2.get(list2.size() / 2))
                      + " ns.");
-            LOG.info("90% latency="
+            LOG.info("90% latency = "
                      + NF.format(list.get(list.size() * 9 / 10) - list2.get(list2.size() * 9 / 10)) + " ns.");
-            LOG.info("98% latency="
+            LOG.info("98% latency = "
                      + NF.format(list.get(list.size() * 98 / 100) - list2.get(list2.size() * 98 / 100))
                      + " ns.");
 
