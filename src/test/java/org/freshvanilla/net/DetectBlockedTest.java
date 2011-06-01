@@ -28,7 +28,7 @@ import org.freshvanilla.test.AbstractTestCase;
 
 public class DetectBlockedTest extends AbstractTestCase {
 
-    public static void test_read() throws IOException, ClassNotFoundException, InterruptedException {
+    public void test_read() throws IOException, ClassNotFoundException, InterruptedException {
         int port = 23456;
         final InetSocketAddress isa = new InetSocketAddress(port);
         final ServerSocketChannel ssc = ServerSocketChannel.open();
@@ -41,7 +41,7 @@ public class DetectBlockedTest extends AbstractTestCase {
                 try {
                     final SocketChannel sc = ssc.accept();
                     Thread.sleep(3 * 1000);
-                    final BinaryWireFormat wf = new BinaryWireFormat();
+                    final BinaryWireFormat wf = new BinaryWireFormat(getMetaClasses());
                     ds = new VanillaDataSocket("test", null, sc, wf, new LinkedHashMap<String, Object>(),
                         1024 * 1024);
                     Thread.sleep(30 * 1000);
@@ -68,7 +68,7 @@ public class DetectBlockedTest extends AbstractTestCase {
         sc.configureBlocking(true);
         sc.socket().connect(isa);
 
-        final BinaryWireFormat wf = new BinaryWireFormat();
+        final BinaryWireFormat wf = new BinaryWireFormat(getMetaClasses());
         DataSocket ds = new VanillaDataSocket("test", isa, sc, wf, new LinkedHashMap<String, Object>(),
             1024 * 1024);
 

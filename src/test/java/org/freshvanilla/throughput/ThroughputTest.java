@@ -44,14 +44,14 @@ public class ThroughputTest extends AbstractTestCase {
     static final int[] MESSAGE_SIZES = {256, 64, 128, 256, 1024, 4096, 16386};
     static final int MESSAGES = 2 * 1000;
 
-    public static void test_echoThroughput() throws IOException, InterruptedException {
+    public void test_echoThroughput() throws IOException, InterruptedException {
         EchoServiceImpl echoService = new EchoServiceImpl();
         VanillaRmiServer<EchoServiceImpl> server = Proxies.newServer("echo-service", 0, echoService);
         doEchoThroughput("localhost:" + server.getPort());
         server.close();
     }
 
-    private static void doEchoThroughput(String connectionString) throws InterruptedException, IOException {
+    private void doEchoThroughput(String connectionString) throws InterruptedException, IOException {
         @SuppressWarnings("unchecked")
         AsyncEchoService client = Proxies.newClient("echo-client", connectionString, AsyncEchoService.class);
         BatchingEchoClient client2 = new BatchingEchoClient(client, 64);
@@ -86,7 +86,7 @@ public class ThroughputTest extends AbstractTestCase {
         closeClient(client);
     }
 
-    private static long doSyncTest(AsyncEchoService client, int messageSize, int messages, boolean print) {
+    private long doSyncTest(AsyncEchoService client, int messageSize, int messages, boolean print) {
         byte[] bytes = new byte[messageSize];
         long start = System.nanoTime();
 
@@ -108,11 +108,11 @@ public class ThroughputTest extends AbstractTestCase {
         return 1;
     }
 
-    private static long doAsyncTest(String type,
-                                    AsyncEchoService client,
-                                    final int messageSize,
-                                    int messages,
-                                    boolean print) throws InterruptedException {
+    private long doAsyncTest(String type,
+                             AsyncEchoService client,
+                             final int messageSize,
+                             int messages,
+                             boolean print) throws InterruptedException {
         byte[] bytes = new byte[messageSize];
         final CountDownLatch counter = new CountDownLatch(messages);
 

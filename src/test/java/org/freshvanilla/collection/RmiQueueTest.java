@@ -33,7 +33,7 @@ public class RmiQueueTest extends AbstractTestCase {
 
     private static final Logger LOG = LoggerFactory.getLogger(RmiQueueTest.class.getName());
 
-    public static void test_queue_over_rmi() throws IOException, InterruptedException {
+    public void test_queue_over_rmi() throws IOException, InterruptedException {
         BlockingQueue<Integer> queue = new ArrayBlockingQueue<Integer>(10);
         final VanillaRmiServer<BlockingQueue<Integer>> server = Proxies.newServer("test_queue_over_rmi", 0,
             queue);
