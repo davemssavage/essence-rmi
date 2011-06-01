@@ -21,34 +21,34 @@ import org.slf4j.LoggerFactory;
 
 public class VanillaResource implements SimpleResource {
 
-    protected final String name;
-    private volatile boolean closed = false;
+    private final String _name;
+    private volatile boolean _closed = false;
 
     public VanillaResource(String name) {
-        this.name = name;
+        _name = name;
     }
 
     public String getName() {
-        return name;
+        return _name;
     }
 
     public boolean isClosed() {
-        return closed;
+        return _closed;
     }
 
     public void close() {
-        closed = true;
+        _closed = true;
     }
 
     public void checkedClosed() throws IllegalStateException {
-        if (closed) {
-            throw new IllegalStateException(name + " closed!");
+        if (_closed) {
+            throw new IllegalStateException(_name + " closed!");
         }
     }
 
     protected void finalize() throws Throwable {
         try {
-            if (!closed) {
+            if (!_closed) {
                 close();
             }
         }

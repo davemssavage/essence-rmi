@@ -23,9 +23,11 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.freshvanilla.lang.MetaClasses;
 import org.freshvanilla.net.BinaryWireFormat;
 import org.freshvanilla.net.DataSocket;
 import org.freshvanilla.net.DataSocketFactory;
@@ -36,32 +38,33 @@ import org.freshvanilla.utils.Classes;
 import org.freshvanilla.utils.Classes.MetaMethod;
 import org.freshvanilla.utils.Factory;
 import org.freshvanilla.utils.VanillaResource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class VanillaRmiServer<P> extends VanillaResource implements Factory<DataSocket, DataSocketHandler> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(VanillaRmiServer.class);
-
-    private final VanillaDataServerSocket serverSocket;
-    private final P provider;
-    private final AtomicInteger id = new AtomicInteger();
-    private final MetaMethod<?>[] memberMethods;
+    private final VanillaDataServerSocket _serverSocket;
+    private final P _provider;
+    private final AtomicInteger _id = new AtomicInteger();
+    private final List<MetaMethod<?>> _memberMethods;
 
     public VanillaRmiServer(String name, int port, P provider) throws IOException {
+        this(name, port, provider, Classes.getClassLoader(provider.getClass()));
+    }
+
+    public VanillaRmiServer(String name, int port, P provider, ClassLoader classLoader) throws IOException {
         super(name);
-        this.provider = provider;
-        memberMethods = Classes.getMemberMethods(provider.getClass());
-        serverSocket = new VanillaDataServerSocket(name, this, new HashMap<String, Object>(), port,
-            new BinaryWireFormat.Builder(name), DataSocketFactory.DEFAULT_MAXIMUM_MESSAGE_SIZE);
+        _provider = provider;
+        _memberMethods = Classes.getMemberMethods(provider.getClass());
+        _serverSocket = new VanillaDataServerSocket(name, this, new HashMap<String, Object>(), port,
+            new BinaryWireFormat.Builder(name, new MetaClasses(classLoader)),
+            DataSocketFactory.DEFAULT_MAXIMUM_MESSAGE_SIZE);
     }
 
     public int getPort() {
-        return serverSocket.getPort();
+        return _serverSocket.getPort();
     }
 
     public DataSocketHandler acquire(DataSocket dataSocket) throws InterruptedException {
-        return new RmiDataSocketHandler(getName() + ':' + id.incrementAndGet(), dataSocket);
+        return new RmiDataSocketHandler(getName() + ':' + _id.incrementAndGet(), dataSocket);
     }
 
     public void recycle(DataSocketHandler dataSocketHandler) {
@@ -69,32 +72,32 @@ public class VanillaRmiServer<P> extends VanillaResource implements Factory<Data
     }
 
     public P getProvider() {
-        return provider;
+        return _provider;
     }
 
     public void close() {
         super.close();
-        serverSocket.close();
+        _serverSocket.close();
     }
 
     public String getConnectionString() {
-        return serverSocket.getConnectionString();
+        return _serverSocket.getConnectionString();
     }
 
     class RmiDataSocketHandler extends VanillaResource implements DataSocketHandler {
-        private final DataSocket ds;
-        private final WireFormat wf;
-        private final Set<OnDisconnectionRunnable> onDisconnection = new LinkedHashSet<OnDisconnectionRunnable>();
+        private final DataSocket _ds;
+        private final WireFormat _wf;
+        private final Set<OnDisconnectionRunnable> _onDisconnection = new LinkedHashSet<OnDisconnectionRunnable>();
 
         private RmiDataSocketHandler(String name, DataSocket ds) {
             super(name);
-            this.ds = ds;
-            wf = ds.wireFormat();
+            _ds = ds;
+            _wf = ds.wireFormat();
         }
 
         public void close() {
-            if (!ds.isClosed()) {
-                ds.close();
+            if (!_ds.isClosed()) {
+                _ds.close();
             }
             super.close();
         }
@@ -110,10 +113,10 @@ public class VanillaRmiServer<P> extends VanillaResource implements Factory<Data
             Object result;
 
             try {
-                final ByteBuffer rb = ds.read();
-                sequenceNumber = wf.readNum(rb);
-                String methodName = wf.readString(rb);
-                final Object[] args = wf.readArray(rb);
+                final ByteBuffer rb = _ds.read();
+                sequenceNumber = _wf.readNum(rb);
+                String methodName = _wf.readString(rb);
+                final Object[] args = _wf.readArray(rb);
                 final MetaMethod<?> method = getMethodFor(methodName, args);
                 final Class<?>[] types = method.parameterTypes;
 
@@ -122,10 +125,10 @@ public class VanillaRmiServer<P> extends VanillaResource implements Factory<Data
                 }
 
                 if (method.getAnnotation(OnDisconnection.class) == null) {
-                    result = ((MetaMethod)method).invoke(provider, args);
+                    result = ((MetaMethod)method).invoke(_provider, args);
                 }
                 else {
-                    onDisconnection.add(new OnDisconnectionRunnable(method, args));
+                    _onDisconnection.add(new OnDisconnectionRunnable(method, args));
                     result = null;
                 }
 
@@ -136,43 +139,44 @@ public class VanillaRmiServer<P> extends VanillaResource implements Factory<Data
             }
             catch (Exception e) {
                 if (e.getClass() == IOException.class || e.getClass() == EOFException.class) {
-                    LOG.debug(name + ": Dropping connection as client has disconnected " + e);
+                    getLog().debug(getName() + ": Dropping connection as client has disconnected " + e);
                     close();
                     return;
                 }
                 result = e;
             }
 
-            final ByteBuffer wb = ds.writeBuffer();
-            wf.writeNum(wb, sequenceNumber);
-            wf.writeBoolean(wb, okay);
-            wf.writeObject(wb, result);
+            final ByteBuffer wb = _ds.writeBuffer();
+            _wf.writeNum(wb, sequenceNumber);
+            _wf.writeBoolean(wb, okay);
+            _wf.writeObject(wb, result);
 
             try {
-                wf.flush(ds, wb);
+                _wf.flush(_ds, wb);
             }
             catch (IOException e) {
                 close();
                 if (result instanceof IOException) {
                     return;
                 }
-                LOG.warn(name + ": Unable to send result=" + result + " as client has disconnected " + e);
+                getLog().warn(
+                    getName() + ": Unable to send result=" + result + " as client has disconnected " + e);
             }
         }
 
         private MetaMethod<?> getMethodFor(String methodName, Object[] args) {
-            for (MetaMethod<?> method : memberMethods) {
+            for (MetaMethod<?> method : _memberMethods) {
                 if (methodName.equals(method.methodName) && method.parameterTypes.length == args.length) {
                     return method;
                 }
             }
             throw new UnsupportedOperationException("Unable to find method " + methodName + " for "
-                                                    + provider.getClass() + " with " + args.length
+                                                    + _provider.getClass() + " with " + args.length
                                                     + " arguments.");
         }
 
         public void onDisconnection() {
-            for (Runnable runnable : onDisconnection) {
+            for (Runnable runnable : _onDisconnection) {
                 runnable.run();
             }
             close();
@@ -180,26 +184,26 @@ public class VanillaRmiServer<P> extends VanillaResource implements Factory<Data
     }
 
     class OnDisconnectionRunnable implements Runnable {
-        private final MetaMethod<?> method;
-        private final Object[] args;
+        private final MetaMethod<?> _method;
+        private final Object[] _args;
 
         OnDisconnectionRunnable(MetaMethod<?> method, Object[] args) {
-            this.method = method;
-            this.args = args;
+            _method = method;
+            _args = args;
         }
 
         @SuppressWarnings({"unchecked", "rawtypes"})
         public void run() {
             try {
-                ((MetaMethod)method).invoke(provider, args);
+                ((MetaMethod)_method).invoke(_provider, _args);
             }
             catch (InvocationTargetException e) {
-                LOG.warn(name + ": Exception thrown on disconnect.", e.getCause());
+                getLog().warn(getName() + ": Exception thrown on disconnect.", e.getCause());
             }
         }
 
         public int hashCode() {
-            return method.hashCode() ^ System.identityHashCode(provider) ^ Arrays.hashCode(args);
+            return _method.hashCode() ^ System.identityHashCode(_provider) ^ Arrays.hashCode(_args);
         }
 
         public boolean equals(Object obj) {
@@ -209,7 +213,7 @@ public class VanillaRmiServer<P> extends VanillaResource implements Factory<Data
 
             @SuppressWarnings("unchecked")
             OnDisconnectionRunnable odr = (OnDisconnectionRunnable)obj;
-            return method.method.equals(odr.method.method) && Arrays.equals(args, odr.args);
+            return _method.method.equals(odr._method.method) && Arrays.equals(_args, odr._args);
         }
     }
 

@@ -51,15 +51,15 @@ public class BinaryWireFormat implements WireFormat {
     private static final byte SIGNED8_STAG = (byte)~SpecialTag.SIGNED8.ordinal();
     private static final SpecialTag[] SPECIAL_TAGS = SpecialTag.values();
 
-    private final byte[] outBytesArray = new byte[BYTES_SIZE];
-    private final PojoSerializer serializer;
+    private final byte[] _outBytesArray = new byte[BYTES_SIZE];
 
-    public BinaryWireFormat() {
-        this(new VanillaPojoSerializer());
-    }
+    private final MetaClasses _metaClasses;
+    private final PojoSerializer _serializer;
 
-    public BinaryWireFormat(PojoSerializer serializer) {
-        this.serializer = serializer;
+    public BinaryWireFormat(MetaClasses metaclasses) {
+        super();
+        _metaClasses = metaclasses;
+        _serializer = new VanillaPojoSerializer(metaclasses);
     }
 
     public void flush(DataSocket ds, ByteBuffer writeBuffer) throws IOException {
@@ -87,8 +87,9 @@ public class BinaryWireFormat implements WireFormat {
         if (b >= 0) throw new StreamCorruptedException("Expected " + expected + " but got a value of " + b);
         final SpecialTag[] tags = SPECIAL_TAGS;
         int b2 = ~b;
-        if (b2 >= tags.length)
+        if (b2 >= tags.length) {
             throw new StreamCorruptedException("Expected " + expected + " but unknown SpecialTag " + b);
+        }
         return tags[b2];
     }
 
@@ -168,7 +169,7 @@ public class BinaryWireFormat implements WireFormat {
         writeSTag(writeBuffer, SpecialTag.ARRAY);
         int len = maxLength > objects.length ? objects.length : maxLength;
         writeNum(writeBuffer, len);
-        MetaClass<?> oClass = MetaClasses.acquireMetaClass(objects.getClass());
+        MetaClass<?> oClass = _metaClasses.acquireMetaClass(objects.getClass());
         writeTag(writeBuffer, oClass.getComponentType().getName());
         for (int i = 0; i < len; i++)
             writeObject(writeBuffer, objects[i]);
@@ -176,19 +177,25 @@ public class BinaryWireFormat implements WireFormat {
 
     private Object[] readArray0(ByteBuffer readBuffer) throws IOException {
         int len = readLen(readBuffer);
-        MetaClass<?> componentType = MetaClasses.acquireMetaClass(readString(readBuffer));
+        MetaClass<?> componentType = _metaClasses.acquireMetaClass(readString(readBuffer));
         Object[] objects;
+
         if (componentType.getType() == Object.class) {
-            if (len == 0)
+            if (len == 0) {
                 objects = NO_OBJECTS;
-            else
+            }
+            else {
                 objects = new Object[len];
+            }
         }
         else {
             objects = (Object[])Array.newInstance(componentType.getType(), len);
         }
-        for (int i = 0; i < len; i++)
+
+        for (int i = 0; i < len; i++) {
             objects[i] = readObject(readBuffer);
+        }
+
         return objects;
     }
 
@@ -255,7 +262,7 @@ public class BinaryWireFormat implements WireFormat {
                 return readSet(readBuffer);
 
             case POJO :
-                return serializer.deserialize(readBuffer, this);
+                return _serializer.deserialize(readBuffer, this);
 
             case BYTES :
                 int len = readLen(readBuffer);
@@ -265,14 +272,14 @@ public class BinaryWireFormat implements WireFormat {
 
             case CLASS :
                 try {
-                    return Class.forName(readString(readBuffer));
+                    return _metaClasses.loadClass(readString(readBuffer));
                 }
                 catch (ClassNotFoundException e) {
                     throw new NotSerializableException(e.toString());
                 }
 
             case META_CLASS :
-                return MetaClasses.acquireMetaClass(readString(readBuffer));
+                return _metaClasses.acquireMetaClass(readString(readBuffer));
         }
         throw new UnsupportedOperationException("Tag " + stag + " not supported.");
     }
@@ -326,7 +333,7 @@ public class BinaryWireFormat implements WireFormat {
         String enumStr = readString(readBuffer);
         int pos = enumStr.indexOf(' ');
         try {
-            Class<Enum> enumClass = (Class<Enum>)Class.forName(enumStr.substring(0, pos));
+            Class<Enum> enumClass = (Class<Enum>)_metaClasses.loadClass(enumStr.substring(0, pos));
             return Enum.valueOf(enumClass, enumStr.substring(pos + 1));
         }
         catch (ClassNotFoundException e) {
@@ -357,9 +364,9 @@ public class BinaryWireFormat implements WireFormat {
             return;
         }
 
-        if (serializer.canSerialize(object)) {
+        if (_serializer.canSerialize(object)) {
             writeSTag(writeBuffer, SpecialTag.POJO);
-            serializer.serialize(writeBuffer, this, object);
+            _serializer.serialize(writeBuffer, this, object);
             return;
         }
 
@@ -602,7 +609,7 @@ public class BinaryWireFormat implements WireFormat {
         }
 
         boolean hichars = false;
-        byte[] bytes = outBytesArray;
+        byte[] bytes = _outBytesArray;
 
         for (int off = 0; off < len; off += BYTES_SIZE) {
             int len2 = len - off < BYTES_SIZE ? len - off : BYTES_SIZE;
@@ -748,8 +755,12 @@ public class BinaryWireFormat implements WireFormat {
     }
 
     public static class Builder extends VanillaResource implements ObjectBuilder<WireFormat> {
-        public Builder(String name) {
+
+        private final MetaClasses _metaClasses;
+
+        public Builder(String name, MetaClasses metaclasses) {
             super(name);
+            _metaClasses = metaclasses;
         }
 
         protected void finalize() throws Throwable {
@@ -763,30 +774,30 @@ public class BinaryWireFormat implements WireFormat {
 
         public WireFormat create() {
             checkedClosed();
-            return new BinaryWireFormat();
+            return new BinaryWireFormat(_metaClasses);
         }
     }
 
     static class SimpleEntry<K, V> implements Entry<K, V> {
-        private final K key;
-        private V value;
+        private final K _key;
+        private V _value;
 
         SimpleEntry(K key, V value) {
-            this.key = key;
-            this.value = value;
+            _key = key;
+            _value = value;
         }
 
         public K getKey() {
-            return key;
+            return _key;
         }
 
         public V getValue() {
-            return value;
+            return _value;
         }
 
         public V setValue(V value) {
-            V prev = this.value;
-            this.value = value;
+            V prev = _value;
+            _value = value;
             return prev;
         }
     }

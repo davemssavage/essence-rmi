@@ -24,29 +24,33 @@ import java.lang.reflect.Modifier;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class Classes {
 
-    private static final Map<Class<?>, Class<?>> WRAPPER_MAP = new LinkedHashMap<Class<?>, Class<?>>();
+    private static final Map<Class<?>, Class<?>> WRAPPER_TYPES = new HashMap<Class<?>, Class<?>>(31);
+
+    static {
+        WRAPPER_TYPES.put(boolean.class, Boolean.class);
+        WRAPPER_TYPES.put(byte.class, Byte.class);
+        WRAPPER_TYPES.put(char.class, Character.class);
+        WRAPPER_TYPES.put(short.class, Short.class);
+        WRAPPER_TYPES.put(int.class, Integer.class);
+        WRAPPER_TYPES.put(long.class, Long.class);
+        WRAPPER_TYPES.put(float.class, Float.class);
+        WRAPPER_TYPES.put(double.class, Double.class);
+        WRAPPER_TYPES.put(void.class, Void.class);
+    }
 
     private Classes() {
         // not used
     }
 
-    static {
-        WRAPPER_MAP.put(boolean.class, Boolean.class);
-        WRAPPER_MAP.put(byte.class, Byte.class);
-        WRAPPER_MAP.put(char.class, Character.class);
-        WRAPPER_MAP.put(short.class, Short.class);
-        WRAPPER_MAP.put(int.class, Integer.class);
-        WRAPPER_MAP.put(long.class, Long.class);
-        WRAPPER_MAP.put(float.class, Float.class);
-        WRAPPER_MAP.put(double.class, Double.class);
-        WRAPPER_MAP.put(void.class, Void.class);
+    public static ClassLoader getClassLoader(Class<?> cls) {
+        ClassLoader cl = cls.getClassLoader();
+        return (cl != null ? cl : ClassLoader.getSystemClassLoader());
     }
 
     @SuppressWarnings("unchecked")
@@ -92,25 +96,19 @@ public class Classes {
     }
 
     private static Class<?> asWrapper(Class<?> clazz) {
-        Class<?> ret = WRAPPER_MAP.get(clazz);
+        Class<?> ret = WRAPPER_TYPES.get(clazz);
         return ret == null ? clazz : ret;
     }
 
-    private static final Map<Class<?>, MetaMethod<?>[]> CLASS_METHODS = new ConcurrentHashMap<Class<?>, MetaMethod<?>[]>();
-
-    public static MetaMethod<?>[] getMemberMethods(Class<?> clazz) {
-        MetaMethod<?>[] methods = CLASS_METHODS.get(clazz);
-        if (methods == null) {
-            List<MetaMethod<?>> methodList = new ArrayList<MetaMethod<?>>();
-            for (Method method : clazz.getMethods())
-                if (isPublicNonStatic(method)) {
-                    method.setAccessible(true);
-                    methodList.add(new MetaMethod<Object>(method.getName(), method.getParameterTypes(),
-                        method));
-                }
-            CLASS_METHODS.put(clazz, methods = methodList.toArray(new MetaMethod[methodList.size()]));
+    public static List<MetaMethod<?>> getMemberMethods(Class<?> clazz) {
+        List<MetaMethod<?>> methodList = new ArrayList<MetaMethod<?>>();
+        for (Method method : clazz.getMethods()) {
+            if (isPublicNonStatic(method)) {
+                method.setAccessible(true);
+                methodList.add(new MetaMethod<Object>(method.getName(), method.getParameterTypes(), method));
+            }
         }
-        return methods;
+        return methodList;
     }
 
     private static boolean isPublicNonStatic(Member method) {
