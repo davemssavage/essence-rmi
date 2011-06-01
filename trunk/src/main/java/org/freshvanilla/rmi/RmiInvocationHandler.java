@@ -43,12 +43,12 @@ public class RmiInvocationHandler implements InvocationHandler, Closeable {
 
     private static final Object[] NO_OBJECTS = {};
 
-    private final Factory<String, DataSocket> factory;
-    private final boolean closeFactory;
+    private final Factory<String, DataSocket> _factory;
+    private final boolean _closeFactory;
 
     public RmiInvocationHandler(Factory<String, DataSocket> factory, boolean closeFactory) {
-        this.factory = factory;
-        this.closeFactory = closeFactory;
+        _factory = factory;
+        _closeFactory = closeFactory;
     }
 
     @Override
@@ -72,7 +72,7 @@ public class RmiInvocationHandler implements InvocationHandler, Closeable {
         }
 
         int argsLength = args.length - (async ? 1 : 0);
-        final DataSocket ds = factory.acquire(async
+        final DataSocket ds = _factory.acquire(async
                         ? "async-org.freshvanilla.rmi"
                         : "sync-org.freshvanilla.rmi");
 
@@ -115,7 +115,7 @@ public class RmiInvocationHandler implements InvocationHandler, Closeable {
             throw new AssertionError(reply);
         }
         finally {
-            factory.recycle(ds);
+            _factory.recycle(ds);
         }
     }
 
@@ -158,8 +158,8 @@ public class RmiInvocationHandler implements InvocationHandler, Closeable {
     }
 
     public void close() {
-        if (closeFactory) {
-            factory.close();
+        if (_closeFactory) {
+            _factory.close();
         }
     }
 

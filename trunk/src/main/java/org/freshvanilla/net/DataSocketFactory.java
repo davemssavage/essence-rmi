@@ -23,6 +23,7 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import org.freshvanilla.lang.MetaClasses;
 import org.freshvanilla.lang.ObjectBuilder;
 import org.freshvanilla.utils.Factory;
 import org.freshvanilla.utils.VanillaResource;
@@ -31,37 +32,31 @@ public class DataSocketFactory extends VanillaResource implements Factory<String
 
     public static final int DEFAULT_MAXIMUM_MESSAGE_SIZE = 1024 * 1024;
 
-    private final InetSocketAddress[] addresses;
-    private int lastAddress = 0;
-    private ObjectBuilder<WireFormat> wireFormatBuilder = null;
-    private final Map<String, Object> header = new LinkedHashMap<String, Object>();
-    private int maximumMessageSize = DEFAULT_MAXIMUM_MESSAGE_SIZE;
-    private final long timeoutMS;
+    private final InetSocketAddress[] _addresses;
+    private final ObjectBuilder<WireFormat> _wireFormatBuilder;
+    private final Map<String, Object> _header = new LinkedHashMap<String, Object>();
+    private final long _timeoutMillis;
 
-    public DataSocketFactory(String name, String connectionString, long timeoutMS) {
+    private int _lastAddress = 0;
+    private int _maximumMessageSize = DEFAULT_MAXIMUM_MESSAGE_SIZE;
+
+    public DataSocketFactory(String name, String connectionString, long timeoutMS, MetaClasses metaClasses) {
         super(name);
-        addresses = parseConnectionString(connectionString);
-        this.timeoutMS = timeoutMS;
-    }
-
-    public ObjectBuilder<WireFormat> getWireFormatBuilder() {
-        return wireFormatBuilder;
-    }
-
-    public void setWireFormatBuilder(ObjectBuilder<WireFormat> wireFormatBuilder) {
-        this.wireFormatBuilder = wireFormatBuilder;
+        _addresses = parseConnectionString(connectionString);
+        _timeoutMillis = timeoutMS;
+        _wireFormatBuilder = new BinaryWireFormat.Builder(name, metaClasses);
     }
 
     public Map<String, Object> getHeader() {
-        return header;
+        return _header;
     }
 
     public int getMaximumMessageSize() {
-        return maximumMessageSize;
+        return _maximumMessageSize;
     }
 
     public void setMaximumMessageSize(int maximumMessageSize) {
-        this.maximumMessageSize = maximumMessageSize;
+        _maximumMessageSize = maximumMessageSize;
     }
 
     private static InetSocketAddress[] parseConnectionString(String connectionString) {
@@ -89,46 +84,39 @@ public class DataSocketFactory extends VanillaResource implements Factory<String
         return addresses;
     }
 
-    public DataSocketFactory(String name, InetSocketAddress[] addresses, long timeoutMS) {
-        super(name);
-        this.addresses = addresses;
-        this.timeoutMS = timeoutMS;
-    }
-
     public DataSocket acquire(String name) throws Exception {
-        int count = 1;
-        WireFormat wireFormat = wireFormatBuilder == null
-                        ? new BinaryWireFormat()
-                        : wireFormatBuilder.create();
-        Map<String, Object> header = new LinkedHashMap<String, Object>(this.header);
-        long timeoutMS = this.timeoutMS < Long.MAX_VALUE
-                        ? System.currentTimeMillis() + this.timeoutMS
+        WireFormat wireFormat = _wireFormatBuilder.create();
+        Map<String, Object> header = new LinkedHashMap<String, Object>(_header);
+        long timeoutMillis = _timeoutMillis < Long.MAX_VALUE
+                        ? System.currentTimeMillis() + _timeoutMillis
                         : Long.MAX_VALUE;
+        int count = 1;
+
         IOException lastException;
 
         do {
             try {
-                final InetSocketAddress remote = addresses[lastAddress];
+                final InetSocketAddress remote = _addresses[_lastAddress];
                 SocketChannel channel = SocketChannel.open(remote);
-                return new VanillaDataSocket(name, remote, channel, wireFormat, header, maximumMessageSize);
+                return new VanillaDataSocket(name, remote, channel, wireFormat, header, _maximumMessageSize);
             }
             catch (IOException e) {
                 if (Thread.currentThread().isInterrupted()) {
                     throw e;
                 }
 
-                if (lastAddress + 1 >= addresses.length) {
-                    lastAddress = 0;
+                if (_lastAddress + 1 >= _addresses.length) {
+                    _lastAddress = 0;
                 }
                 else {
-                    lastAddress++;
+                    _lastAddress++;
                 }
 
                 lastException = e;
             }
 
-            if (count == addresses.length) {
-                getLog().debug(name + ": unable to connect to any of " + Arrays.asList(addresses));
+            if (count == _addresses.length) {
+                getLog().debug(name + ": unable to connect to any of " + Arrays.asList(_addresses));
                 Thread.sleep(2500);
                 count = 0;
             }
@@ -136,7 +124,7 @@ public class DataSocketFactory extends VanillaResource implements Factory<String
                 count++;
             }
         }
-        while (System.currentTimeMillis() < timeoutMS);
+        while (System.currentTimeMillis() < timeoutMillis);
 
         throw lastException;
     }

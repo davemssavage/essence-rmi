@@ -33,34 +33,33 @@ import org.freshvanilla.utils.Callback;
 import org.freshvanilla.utils.NamedThreadFactory;
 import org.freshvanilla.utils.VanillaResource;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class VanillaDataSocket extends VanillaResource implements DataSocket {
-
-    private static final Logger LOG = LoggerFactory.getLogger(VanillaDataSocket.class);
 
     private static final int MIN_PACKET_SIZE = 256;
     private static final int BUFFER_SIZE = 256 * 1024;
     private static final long TIMEOUT_MS = 10 * 1000L;
-    private static final long WARNING_PERIOD = 1000L - DataSockets.CHECK_PERIOD_MS / 2;
+    private static final long WARNING_PERIOD = 3000L - DataSockets.CHECK_PERIOD_MS / 2;
 
-    private final InetSocketAddress address;
-    private final SocketChannel channel;
-    private final WireFormat wireFormat;
-    private final AtomicLong microTimestamp = new AtomicLong(System.currentTimeMillis() * 1000L);
-    private final Object executorLock = new Object();
-    private final ConcurrentMap<Long, Callback<?>> callbackMap = new ConcurrentHashMap<Long, Callback<?>>();
-    private final ByteBuffer readBuffer;
-    private final ByteBuffer writeBuffer;
-    private final Map<String, Object> otherHeader;
-    private ExecutorService executor = null;
-    // warning metrics.
-    private boolean reading = false;
-    private long readTimeMS = 0;
-    private long nextReadWarningMS = 0;
-    private boolean writing = false;
-    private long writeTimeMS = 0;
-    private long nextWriteWarningMS = 0;
+    private final Logger _log;
+    private final InetSocketAddress _address;
+    private final SocketChannel _channel;
+    private final WireFormat _wireFormat;
+    private final AtomicLong _microTimestamp = new AtomicLong(System.currentTimeMillis() * 1000L);
+    private final Object _executorLock = new Object();
+    private final ConcurrentMap<Long, Callback<?>> _callbackMap = new ConcurrentHashMap<Long, Callback<?>>();
+    private final ByteBuffer _readBuffer;
+    private final ByteBuffer _writeBuffer;
+    private final Map<String, Object> _otherHeader;
+    private ExecutorService _executor = null;
+
+    // warning metrics
+    private boolean _reading = false;
+    private long _readTimeMillis = 0;
+    private long _nextReadWarningMillis = 0;
+    private boolean _writing = false;
+    private long _writeTimeMillis = 0;
+    private long _nextWriteWarningMillis = 0;
 
     @SuppressWarnings("unchecked")
     public VanillaDataSocket(String name,
@@ -70,29 +69,30 @@ public class VanillaDataSocket extends VanillaResource implements DataSocket {
                              Map<String, Object> header,
                              int maximumMessageSize) throws IOException {
         super(name);
-        this.address = address;
-        this.channel = channel;
+        _log = getLog();
+        _address = address;
+        _channel = channel;
         channel.configureBlocking(true);
         Socket socket = channel.socket();
         socket.setTcpNoDelay(true);
         socket.setTrafficClass(/* IPTOS_LOWDELAY */0x10);
         socket.setSendBufferSize(BUFFER_SIZE);
         socket.setReceiveBufferSize(BUFFER_SIZE);
-        this.wireFormat = wireFormat;
-        readBuffer = allocateBuffer(maximumMessageSize);
-        writeBuffer = allocateBuffer(maximumMessageSize);
+        _wireFormat = wireFormat;
+        _readBuffer = allocateBuffer(maximumMessageSize);
+        _writeBuffer = allocateBuffer(maximumMessageSize);
         getLog().debug(name + ": connecting to " + socket);
         DataSockets.registerDataSocket(this);
 
         wireFormat.writeObject(writeBuffer(), header);
         flush();
         final ByteBuffer rb = read();
-        otherHeader = (Map<String, Object>)wireFormat.readObject(rb);
-        getLog().debug(name + ": connected to " + socket + ' ' + otherHeader);
+        _otherHeader = (Map<String, Object>)wireFormat.readObject(rb);
+        getLog().debug(name + ": connected to " + socket + ' ' + _otherHeader);
     }
 
     public InetSocketAddress getAddress() {
-        return address;
+        return _address;
     }
 
     private ByteBuffer allocateBuffer(int maximumMessageSize) {
@@ -101,47 +101,47 @@ public class VanillaDataSocket extends VanillaResource implements DataSocket {
     }
 
     public Map<String, Object> getOtherHeader() {
-        return otherHeader;
+        return _otherHeader;
     }
 
     public WireFormat wireFormat() {
-        return wireFormat;
+        return _wireFormat;
     }
 
     public void addCallback(long sequenceNumber, Callback<?> callback) {
-        callbackMap.put(sequenceNumber, callback);
+        _callbackMap.put(sequenceNumber, callback);
     }
 
     public Callback<?> removeCallback(long sequenceNumber) {
-        return callbackMap.remove(sequenceNumber);
+        return _callbackMap.remove(sequenceNumber);
     }
 
     public void setReader(final Callback<DataSocket> reader) {
-        synchronized (executorLock) {
-            ExecutorService executor1 = this.executor;
+        synchronized (_executorLock) {
+            ExecutorService executor1 = _executor;
             if (executor1 != null) {
                 return;
             }
-            this.executor = Executors.newCachedThreadPool(new NamedThreadFactory(name + "-reply-listener",
+            _executor = Executors.newCachedThreadPool(new NamedThreadFactory(getName() + "-reply-listener",
                 Thread.MAX_PRIORITY, true));
-            executor.submit(new ReaderRunnable(reader));
+            _executor.submit(new ReaderRunnable(reader));
         }
     }
 
     public ByteBuffer writeBuffer() {
-        writeBuffer.clear();
+        _writeBuffer.clear();
         // so we can write the length later.
-        writeBuffer.position(4);
-        return writeBuffer;
+        _writeBuffer.position(4);
+        return _writeBuffer;
     }
 
     public ByteBuffer read() throws IOException {
-        final ByteBuffer rb = readBuffer;
+        final ByteBuffer rb = _readBuffer;
         rb.rewind();
         rb.limit(MIN_PACKET_SIZE);
 
         readFully(rb);
-        reading = true;
+        _reading = true;
 
         try {
             int len = rb.getInt(0);
@@ -151,8 +151,8 @@ public class VanillaDataSocket extends VanillaResource implements DataSocket {
             }
         }
         finally {
-            reading = false;
-            readTimeMS = 0;
+            _reading = false;
+            _readTimeMillis = 0;
         }
 
         rb.rewind();
@@ -184,7 +184,7 @@ public class VanillaDataSocket extends VanillaResource implements DataSocket {
         int len = -1;
 
         try {
-            len = channel.read(rb);
+            len = _channel.read(rb);
         }
         catch (IOException e) {
             final String eStr = e.toString();
@@ -225,7 +225,7 @@ public class VanillaDataSocket extends VanillaResource implements DataSocket {
         int len = -1;
 
         try {
-            len = channel.write(wb);
+            len = _channel.write(wb);
 
         }
         catch (IOException e) {
@@ -241,7 +241,7 @@ public class VanillaDataSocket extends VanillaResource implements DataSocket {
     }
 
     public void flush() throws IOException {
-        final ByteBuffer wb = writeBuffer;
+        final ByteBuffer wb = _writeBuffer;
         int len = wb.position();
         wb.flip();
         wb.putInt(0, len);
@@ -250,19 +250,19 @@ public class VanillaDataSocket extends VanillaResource implements DataSocket {
             wb.limit(len = MIN_PACKET_SIZE);
         }
 
-        writing = true;
+        _writing = true;
 
         try {
             writeFully(wb);
         }
         finally {
-            writing = false;
-            writeTimeMS = 0;
+            _writing = false;
+            _writeTimeMillis = 0;
         }
     }
 
     public long microTimestamp() {
-        return microTimestamp.getAndIncrement();
+        return _microTimestamp.getAndIncrement();
     }
 
     public void close() {
@@ -270,42 +270,42 @@ public class VanillaDataSocket extends VanillaResource implements DataSocket {
         DataSockets.unregisterDataSocket(this);
 
         try {
-            channel.close();
+            _channel.close();
         }
         catch (IOException ignored) {
             // ignored.
         }
 
-        if (executor != null) {
-            executor.shutdownNow();
+        if (_executor != null) {
+            _executor.shutdownNow();
         }
 
-        for (Callback<?> callback : callbackMap.values()) {
-            callback.onException(new IllegalStateException(name + " is closed!"));
+        for (Callback<?> callback : _callbackMap.values()) {
+            callback.onException(new IllegalStateException(getName() + " is closed!"));
         }
 
-        executor = null;
-        callbackMap.clear();
+        _executor = null;
+        _callbackMap.clear();
     }
 
     class ReaderRunnable implements Runnable {
-        private final Callback<DataSocket> reader;
+        private final Callback<DataSocket> _reader;
 
         ReaderRunnable(Callback<DataSocket> reader) {
-            this.reader = reader;
+            _reader = reader;
         }
 
         public void run() {
             while (!isClosed()) {
                 try {
-                    reader.onCallback(VanillaDataSocket.this);
+                    _reader.onCallback(VanillaDataSocket.this);
                 }
                 catch (Exception e) {
                     if (isClosed()) {
                         return;
                     }
 
-                    reader.onException(e);
+                    _reader.onException(e);
                     if (e instanceof IOException) {
                         close();
                     }
@@ -314,47 +314,51 @@ public class VanillaDataSocket extends VanillaResource implements DataSocket {
         }
     }
 
-    public void timedCheck(long timeMS) {
-        if (reading) {
-            if (readTimeMS == 0) {
-                readTimeMS = timeMS;
-                nextReadWarningMS = timeMS + WARNING_PERIOD;
+    public void timedCheck(long timeMillis) {
+        if (_reading) {
+            if (_readTimeMillis == 0) {
+                _readTimeMillis = timeMillis;
+                _nextReadWarningMillis = timeMillis + WARNING_PERIOD;
             }
-            else if (timeMS >= nextReadWarningMS) {
-                final long totalWriteTimeMS = timeMS - readTimeMS;
-                if (totalWriteTimeMS > TIMEOUT_MS) {
-                    if (LOG.isDebugEnabled()) {
-                        LOG.debug(name + ": closing reading connection after " + totalWriteTimeMS + " ms");
+            else if (timeMillis >= _nextReadWarningMillis) {
+                final long totalWriteTimeMillis = timeMillis - _readTimeMillis;
+                if (totalWriteTimeMillis > TIMEOUT_MS) {
+                    if (_log.isDebugEnabled()) {
+                        _log.debug(getName() + ": closing reading connection after " + totalWriteTimeMillis
+                                   + " ms");
                     }
                     close();
                 }
                 else {
-                    if (LOG.isDebugEnabled()) {
-                        LOG.debug(name + ": waiting for long running read " + totalWriteTimeMS + " ms");
+                    if (_log.isDebugEnabled()) {
+                        _log.debug(getName() + ": waiting for long running read " + totalWriteTimeMillis
+                                   + " ms");
                     }
-                    nextReadWarningMS = timeMS + WARNING_PERIOD;
+                    _nextReadWarningMillis = timeMillis + WARNING_PERIOD;
                 }
             }
         }
 
-        if (writing) {
-            if (writeTimeMS == 0) {
-                writeTimeMS = timeMS;
-                nextWriteWarningMS = timeMS + WARNING_PERIOD;
+        if (_writing) {
+            if (_writeTimeMillis == 0) {
+                _writeTimeMillis = timeMillis;
+                _nextWriteWarningMillis = timeMillis + WARNING_PERIOD;
             }
-            else if (timeMS >= nextWriteWarningMS) {
-                final long totalWriteTimeMS = timeMS - writeTimeMS;
-                if (totalWriteTimeMS > TIMEOUT_MS) {
-                    if (LOG.isDebugEnabled()) {
-                        LOG.debug(name + ": closing writing connection after " + totalWriteTimeMS + " ms");
+            else if (timeMillis >= _nextWriteWarningMillis) {
+                final long totalWriteTimeMillis = timeMillis - _writeTimeMillis;
+                if (totalWriteTimeMillis > TIMEOUT_MS) {
+                    if (_log.isDebugEnabled()) {
+                        _log.debug(getName() + ": closing writing connection after " + totalWriteTimeMillis
+                                   + " ms");
                     }
                     close();
                 }
                 else {
-                    if (LOG.isDebugEnabled()) {
-                        LOG.debug(name + ": waiting for long running write " + totalWriteTimeMS + " ms");
+                    if (_log.isDebugEnabled()) {
+                        _log.debug(getName() + ": waiting for long running write " + totalWriteTimeMillis
+                                   + " ms");
                     }
-                    nextWriteWarningMS = timeMS + WARNING_PERIOD;
+                    _nextWriteWarningMillis = timeMillis + WARNING_PERIOD;
                 }
             }
         }

@@ -25,26 +25,26 @@ import org.freshvanilla.lang.misc.Unsafe;
 
 public class VanillaClass<T> implements MetaClass<T> {
 
-    private final Class<T> clazz;
-    private final String nameWithParameters;
-    private final MetaField<T, ?>[] fields;
-    private final boolean definesEquals;
-    private final Class<?> componentType;
+    private final Class<T> _clazz;
+    private final String _nameWithParameters;
+    private final MetaField<T, ?>[] _fields;
+    private final boolean _definesEquals;
+    private final Class<?> _componentType;
 
     public VanillaClass(Class<T> clazz) {
-        this.clazz = clazz;
+        _clazz = clazz;
 
-        fields = getFieldsForSerialization(clazz);
+        _fields = getFieldsForSerialization(clazz);
 
         StringBuilder sb = new StringBuilder(64);
         sb.append(clazz.getName());
-        for (MetaField<T, ?> field : fields) {
+        for (MetaField<T, ?> field : _fields) {
             sb.append(',').append(field.getName());
         }
 
-        nameWithParameters = sb.toString();
-        definesEquals = clazz.getName().startsWith("java") || clazz.getName().startsWith("com.sun.");
-        componentType = clazz.getComponentType();
+        _nameWithParameters = sb.toString();
+        _definesEquals = clazz.getName().startsWith("java") || clazz.getName().startsWith("com.sun.");
+        _componentType = clazz.getComponentType();
     }
 
     @SuppressWarnings("unchecked")
@@ -66,26 +66,26 @@ public class VanillaClass<T> implements MetaClass<T> {
     }
 
     public Class<T> getType() {
-        return clazz;
+        return _clazz;
     }
 
     public String nameWithParameters() {
-        return nameWithParameters;
+        return _nameWithParameters;
     }
 
     public MetaField<T, ?>[] fields() {
-        return fields;
+        return _fields;
     }
 
     public T newInstance() throws InstantiationException {
-        return Unsafe.newInstance(clazz);
+        return Unsafe.newInstance(_clazz);
     }
 
     public boolean definesEquals() {
-        return definesEquals;
+        return _definesEquals;
     }
 
     public Class<?> getComponentType() {
-        return componentType;
+        return _componentType;
     }
 }

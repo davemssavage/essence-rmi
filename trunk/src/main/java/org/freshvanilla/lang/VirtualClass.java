@@ -20,50 +20,50 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class VirtualClass<T> implements MetaClass<T> {
-    private final MetaClass<T> metaClass;
-    private final String nameWithParameters;
-    private final MetaField<T, ?>[] fields;
+    private final MetaClass<T> _metaClass;
+    private final String _nameWithParameters;
+    private final MetaField<T, ?>[] _fields;
 
     @SuppressWarnings("unchecked")
     public VirtualClass(MetaClass<T> metaClass, String nameWithParameters, String[] nameWithParametersSplit) {
-        this.metaClass = metaClass;
-        this.nameWithParameters = nameWithParameters;
+        _metaClass = metaClass;
+        _nameWithParameters = nameWithParameters;
 
         Map<String, MetaField<T, ?>> fieldsByName = new LinkedHashMap<String, MetaField<T, ?>>();
         for (MetaField<T, ?> field : metaClass.fields()) {
             fieldsByName.put(field.getName(), field);
         }
 
-        this.fields = new MetaField[nameWithParametersSplit.length - 1];
+        _fields = new MetaField[nameWithParametersSplit.length - 1];
 
-        for (int i = 0; i < fields.length; i++) {
+        for (int i = 0; i < _fields.length; i++) {
             MetaField<T, ?> field = fieldsByName.get(nameWithParametersSplit[i + 1]);
             if (field == null) {
                 final String name = nameWithParametersSplit[i + 1];
                 field = new VanillaField<T, Void>(name, null, Void.class);
             }
-            fields[i] = field;
+            _fields[i] = field;
         }
     }
 
     public Class<T> getType() {
-        return metaClass.getType();
+        return _metaClass.getType();
     }
 
     public String nameWithParameters() {
-        return nameWithParameters;
+        return _nameWithParameters;
     }
 
     public MetaField<T, ?>[] fields() {
-        return fields;
+        return _fields;
     }
 
     public T newInstance() throws InstantiationException {
-        return metaClass.newInstance();
+        return _metaClass.newInstance();
     }
 
     public boolean definesEquals() {
-        return metaClass.definesEquals();
+        return _metaClass.definesEquals();
     }
 
     public Class<?> getComponentType() {

@@ -26,6 +26,13 @@ import org.freshvanilla.lang.MetaField;
 
 public class VanillaPojoSerializer implements PojoSerializer {
 
+    private final MetaClasses _metaClasses;
+
+    public VanillaPojoSerializer(MetaClasses metaclasses) {
+        super();
+        _metaClasses = metaclasses;
+    }
+
     public <Pojo> boolean canSerialize(Pojo pojo) {
         final String className = pojo.getClass().getName();
         return !className.startsWith("java") && !className.startsWith("com.sun.")
@@ -34,7 +41,7 @@ public class VanillaPojoSerializer implements PojoSerializer {
 
     @SuppressWarnings("unchecked")
     public <Pojo> void serialize(ByteBuffer wb, WireFormat wf, Pojo pojo) throws IOException {
-        MetaClass<Pojo> clazz = MetaClasses.acquireMetaClass((Class<Pojo>)pojo.getClass());
+        MetaClass<Pojo> clazz = _metaClasses.acquireMetaClass((Class<Pojo>)pojo.getClass());
         wf.writeTag(wb, clazz.nameWithParameters());
 
         for (MetaField<Pojo, ?> field : clazz.fields()) {
@@ -44,7 +51,7 @@ public class VanillaPojoSerializer implements PojoSerializer {
 
     public <Pojo> Pojo deserialize(ByteBuffer rb, WireFormat wf) throws IOException {
         String classWithParameters = (String)wf.readObject(rb);
-        MetaClass<Pojo> clazz = MetaClasses.acquireMetaClass(classWithParameters);
+        MetaClass<Pojo> clazz = _metaClasses.acquireMetaClass(classWithParameters);
         Pojo pojo;
 
         try {

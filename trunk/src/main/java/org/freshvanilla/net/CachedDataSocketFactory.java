@@ -24,47 +24,47 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 
+import org.freshvanilla.lang.MetaClasses;
 import org.freshvanilla.lang.misc.Unsafe;
 import org.freshvanilla.utils.Factory;
 import org.freshvanilla.utils.VanillaResource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class CachedDataSocketFactory extends VanillaResource implements Factory<String, DataSocket> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(CachedDataSocketFactory.class);
+    private final ConcurrentMap<String, DataSockets> _dataSocketsMap = new ConcurrentHashMap<String, DataSockets>();
+    private final Factory<String, DataSocket> _dataSocketBuilder;
+    private int _maximumConnections = 4;
 
-    private final ConcurrentMap<String, DataSockets> dataSocketsMap = new ConcurrentHashMap<String, DataSockets>();
-    private final Factory<String, DataSocket> dataSocketBuilder;
-    private int maximumConnections = 4;
-
-    public CachedDataSocketFactory(String name, String connectionString) {
-        this(name, connectionString, Long.MAX_VALUE);
+    public CachedDataSocketFactory(String name, String connectionString, MetaClasses metaClasses) {
+        this(name, connectionString, Long.MAX_VALUE, metaClasses);
     }
 
-    public CachedDataSocketFactory(String name, String connectionString, long timeoutMS) {
-        this(name, new DataSocketFactory(name, connectionString, timeoutMS));
+    public CachedDataSocketFactory(String name,
+                                   String connectionString,
+                                   long timeoutMillis,
+                                   MetaClasses metaClasses) {
+        this(name, new DataSocketFactory(name, connectionString, timeoutMillis, metaClasses));
     }
 
     public CachedDataSocketFactory(String name, Factory<String, DataSocket> dataSocketBuilder) {
         super(name);
-        this.dataSocketBuilder = dataSocketBuilder;
+        _dataSocketBuilder = dataSocketBuilder;
     }
 
     public int getMaximumConnections() {
-        return maximumConnections;
+        return _maximumConnections;
     }
 
     public void setMaximumConnections(int maximumConnections) {
-        this.maximumConnections = maximumConnections;
+        _maximumConnections = maximumConnections;
     }
 
     public DataSocket acquire(String description) throws InterruptedException {
         checkedClosed();
-        DataSockets dataSockets = dataSocketsMap.get(description);
+        DataSockets dataSockets = _dataSocketsMap.get(description);
         if (dataSockets == null) {
-            dataSocketsMap.putIfAbsent(description, new DataSockets(maximumConnections));
-            dataSockets = dataSocketsMap.get(description);
+            _dataSocketsMap.putIfAbsent(description, new DataSockets(_maximumConnections));
+            dataSockets = _dataSocketsMap.get(description);
         }
         DataSocket ds = acquire0(dataSockets, description);
         synchronized (dataSockets.used) {
@@ -92,13 +92,13 @@ public class CachedDataSocketFactory extends VanillaResource implements Factory<
 
         // should not go over the maximum.
         int count = 1;
-        while (dataSockets.used.size() >= maximumConnections) {
+        while (dataSockets.used.size() >= _maximumConnections) {
             Thread.sleep(1);
             // see if it was freed.
             ds = dataSockets.free.poll();
             if (ds != null) {
                 if (count >= 1) {
-                    LOG.debug(name + ": got a connection after " + count);
+                    getLog().debug(getName() + ": got a connection after " + count);
                 }
                 return ds;
             }
@@ -106,12 +106,12 @@ public class CachedDataSocketFactory extends VanillaResource implements Factory<
         }
 
         // there is a race condition where this could appear less than the actual number.
-        if (dataSockets.free.size() + dataSockets.used.size() >= maximumConnections) {
+        if (dataSockets.free.size() + dataSockets.used.size() >= _maximumConnections) {
             return dataSockets.free.take();
         }
 
         try {
-            return dataSocketBuilder.acquire(description);
+            return _dataSocketBuilder.acquire(description);
         }
         catch (Exception e) {
             throw Unsafe.rethrow(e);
@@ -123,9 +123,9 @@ public class CachedDataSocketFactory extends VanillaResource implements Factory<
             return;
         }
 
-        DataSockets dataSockets = dataSocketsMap.get(dataSocket.getName());
+        DataSockets dataSockets = _dataSocketsMap.get(dataSocket.getName());
         if (dataSockets == null) {
-            LOG.warn(name + ": unexpected recycled object " + dataSocket);
+            getLog().warn(getName() + ": unexpected recycled object " + dataSocket);
             dataSocket.close();
             return;
         }
@@ -143,7 +143,7 @@ public class CachedDataSocketFactory extends VanillaResource implements Factory<
                     dataSocket = null;
                 }
                 else {
-                    LOG.debug(name + ": closing as over maximum connections " + dataSocket);
+                    getLog().debug(getName() + ": closing as over maximum connections " + dataSocket);
                 }
             }
             catch (InterruptedException ignored) {
@@ -160,7 +160,7 @@ public class CachedDataSocketFactory extends VanillaResource implements Factory<
     public void close() {
         super.close();
 
-        for (DataSockets dataSockets : dataSocketsMap.values()) {
+        for (DataSockets dataSockets : _dataSocketsMap.values()) {
             for (DataSocket socket : dataSockets.free) {
                 socket.close();
             }
@@ -172,7 +172,7 @@ public class CachedDataSocketFactory extends VanillaResource implements Factory<
             }
         }
 
-        dataSocketsMap.clear();
+        _dataSocketsMap.clear();
     }
 
     static class DataSockets {

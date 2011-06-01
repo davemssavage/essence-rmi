@@ -19,8 +19,10 @@ package org.freshvanilla.rmi;
 import java.io.IOException;
 import java.lang.reflect.Proxy;
 
+import org.freshvanilla.lang.MetaClasses;
 import org.freshvanilla.net.CachedDataSocketFactory;
 import org.freshvanilla.net.DataSocket;
+import org.freshvanilla.utils.Classes;
 import org.freshvanilla.utils.Factory;
 
 public class Proxies {
@@ -29,22 +31,36 @@ public class Proxies {
         return new VanillaRmiServer<P>(name, port, provider);
     }
 
-    public static <I> I newClient(Factory<String, DataSocket> factory, Class<I>... interfaces) {
-        return newClient(factory, false, interfaces);
+    public static <P> VanillaRmiServer<P> newServer(String name, int port, P provider, ClassLoader classLoader)
+        throws IOException {
+        return new VanillaRmiServer<P>(name, port, provider, classLoader);
     }
 
     public static <I> I newClient(String name, String connectionString, Class<I>... interfaces) {
-        Factory<String, DataSocket> factory = new CachedDataSocketFactory(name, connectionString, 60 * 1000L);
-        return newClient(factory, true, interfaces);
+        return newClient(name, connectionString, Classes.getClassLoader(interfaces[0]), interfaces);
     }
 
+    public static <I> I newClient(String name,
+                                  String connectionString,
+                                  ClassLoader classLoader,
+                                  Class<I>... interfaces) {
+        MetaClasses metaClasses = new MetaClasses(classLoader);
+        Factory<String, DataSocket> factory = new CachedDataSocketFactory(name, connectionString, 60 * 1000L,
+            metaClasses);
+        return newClient(factory, true, classLoader, interfaces);
+    }
+
+    public static <I> I newClient(Factory<String, DataSocket> factory, Class<I>... interfaces) {
+        return newClient(factory, false, Classes.getClassLoader(interfaces[0]), interfaces);
+    }
+
+    @SuppressWarnings("unchecked")
     public static <I> I newClient(Factory<String, DataSocket> factory,
                                   boolean closeFactory,
+                                  ClassLoader classLoader,
                                   Class<I>... interfaces) {
         RmiInvocationHandler rmiih = new RmiInvocationHandler(factory, closeFactory);
-        @SuppressWarnings("unchecked")
-        I proxy = (I)Proxy.newProxyInstance(Thread.currentThread().getContextClassLoader(), interfaces, rmiih);
-        return proxy;
+        return (I)Proxy.newProxyInstance(classLoader, interfaces, rmiih);
     }
 
 }

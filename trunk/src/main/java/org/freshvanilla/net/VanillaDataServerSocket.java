@@ -32,12 +32,13 @@ import org.freshvanilla.utils.NamedThreadFactory;
 import org.freshvanilla.utils.VanillaResource;
 
 public class VanillaDataServerSocket extends VanillaResource implements Runnable {
-    private final ServerSocketChannel channel;
-    private final Factory<DataSocket, DataSocketHandler> factory;
-    private final Map<String, Object> header;
-    private final ObjectBuilder<WireFormat> wireFormatBuilder;
-    private final int maximumMessageSize;
-    private final ExecutorService executor;
+
+    private final ServerSocketChannel _channel;
+    private final Factory<DataSocket, DataSocketHandler> _factory;
+    private final Map<String, Object> _header;
+    private final ObjectBuilder<WireFormat> _wireFormatBuilder;
+    private final int _maximumMessageSize;
+    private final ExecutorService _executor;
     private final int port;
 
     public VanillaDataServerSocket(String name,
@@ -47,18 +48,18 @@ public class VanillaDataServerSocket extends VanillaResource implements Runnable
                                    ObjectBuilder<WireFormat> wireFormatBuilder,
                                    int maximumMessageSize) throws IOException {
         super(name);
-        this.factory = factory;
-        this.header = header;
-        this.wireFormatBuilder = wireFormatBuilder;
-        this.maximumMessageSize = maximumMessageSize;
+        _factory = factory;
+        _header = header;
+        _wireFormatBuilder = wireFormatBuilder;
+        _maximumMessageSize = maximumMessageSize;
 
-        this.channel = ServerSocketChannel.open();
-        this.channel.configureBlocking(true);
+        _channel = ServerSocketChannel.open();
+        _channel.configureBlocking(true);
         port = bindToPort(port);
         this.port = port;
-        this.executor = Executors.newCachedThreadPool(new NamedThreadFactory(name + "-server",
+        _executor = Executors.newCachedThreadPool(new NamedThreadFactory(name + "-server",
             Thread.MAX_PRIORITY, true));
-        this.executor.submit(this);
+        _executor.submit(this);
     }
 
     private int bindToPort(int port) throws IOException {
@@ -70,8 +71,8 @@ public class VanillaDataServerSocket extends VanillaResource implements Runnable
             }
 
             try {
-                channel.socket().bind(new InetSocketAddress(port));
-                getLog().debug(name + ": Listening on port " + port);
+                _channel.socket().bind(new InetSocketAddress(port));
+                getLog().debug(getName() + ": Listening on port " + port);
                 break;
             }
             catch (SocketException e) {
@@ -95,9 +96,9 @@ public class VanillaDataServerSocket extends VanillaResource implements Runnable
     public void run() {
         try {
             while (!isClosed()) {
-                final SocketChannel socketChannel = channel.accept();
+                final SocketChannel socketChannel = _channel.accept();
                 Runnable runnable = new RmiServerRunnable(socketChannel);
-                executor.submit(runnable);
+                _executor.submit(runnable);
             }
         }
         catch (IOException e) {
@@ -111,17 +112,17 @@ public class VanillaDataServerSocket extends VanillaResource implements Runnable
     public void close() {
         super.close();
         try {
-            channel.close();
+            _channel.close();
         }
         catch (IOException ignored) {
             // ignored.
         }
-        executor.shutdown();
+        _executor.shutdown();
     }
 
     public String getConnectionString() {
-        final InetAddress address = channel.socket().getInetAddress();
-        return address.getCanonicalHostName() + ':' + channel.socket().getLocalPort();
+        final InetAddress address = _channel.socket().getInetAddress();
+        return address.getCanonicalHostName() + ':' + _channel.socket().getLocalPort();
     }
 
     class RmiServerRunnable implements Runnable {
@@ -135,9 +136,9 @@ public class VanillaDataServerSocket extends VanillaResource implements Runnable
             DataSocket ds = null;
             DataSocketHandler socketHandler = null;
             try {
-                ds = new VanillaDataSocket(name, null, socketChannel, wireFormatBuilder.create(), header,
-                    maximumMessageSize);
-                socketHandler = factory.acquire(ds);
+                ds = new VanillaDataSocket(getName(), null, socketChannel, _wireFormatBuilder.create(), _header,
+                    _maximumMessageSize);
+                socketHandler = _factory.acquire(ds);
                 socketHandler.onConnection();
                 while (!ds.isClosed()) {
                     socketHandler.onMessage();
