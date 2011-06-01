@@ -14,25 +14,34 @@
  limitations under the License.
  */
 
-package org.freshvanilla.lang;
+package org.freshvanilla.rmi;
 
 import java.util.Map;
 
+import org.freshvanilla.lang.MetaClasses;
+import org.freshvanilla.utils.Classes;
+
 public class AbstractPojo {
 
+    private static final MetaClasses META = new MetaClasses(Classes.getClassLoader(AbstractPojo.class));
+
     public Map<String, Object> asMap() {
-        return MetaClasses.asMap(this);
+        return MetaClasses.asMap(META, this);
     }
 
+    @Override
     public int hashCode() {
-        return MetaClasses.hashCodeFor(this);
+        return MetaClasses.hashCodeFor(META, this);
     }
 
+    @Override
     public boolean equals(Object obj) {
-        return MetaClasses.isEquals(this, obj);
+        return MetaClasses.equals(META, this, obj);
     }
 
+    @Override
     public String toString() {
-        return MetaClasses.asString(this);
+        return MetaClasses.asString(META, this);
     }
+
 }
