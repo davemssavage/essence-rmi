@@ -26,9 +26,11 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.freshvanilla.utils.NamedThreadFactory;
 
 public class DataSockets {
+
     private static final AtomicReference<ScheduledExecutorService> MANAGER = new AtomicReference<ScheduledExecutorService>();
     private static final Map<DataSocket, String> DATA_SOCKETS = new ConcurrentHashMap<DataSocket, String>();
-    static final long CHECK_PERIOD_MS = 100;
+
+    static final long CHECK_PERIOD_MS = 1000;
 
     private DataSockets() {
         // forbidden
@@ -50,15 +52,22 @@ public class DataSockets {
     public static void unregisterDataSocket(DataSocket ds) {
         DATA_SOCKETS.remove(ds);
         synchronized (MANAGER) {
-            if (DATA_SOCKETS.isEmpty()) reset();
+            if (DATA_SOCKETS.isEmpty()) {
+                reset();
+            }
         }
     }
 
     public static void reset() {
         ScheduledExecutorService service = MANAGER.getAndSet(null);
-        if (service != null) service.shutdownNow();
-        for (DataSocket dataSocket : DATA_SOCKETS.keySet())
+        if (service != null) {
+            service.shutdownNow();
+        }
+
+        for (DataSocket dataSocket : DATA_SOCKETS.keySet()) {
             dataSocket.close();
+        }
+
         DATA_SOCKETS.clear();
     }
 
@@ -67,7 +76,9 @@ public class DataSockets {
             long now = System.currentTimeMillis();
             for (DataSocket dataSocket : DATA_SOCKETS.keySet()) {
                 dataSocket.timedCheck(now);
-                if (dataSocket.isClosed()) DATA_SOCKETS.remove(dataSocket);
+                if (dataSocket.isClosed()) {
+                    DATA_SOCKETS.remove(dataSocket);
+                }
             }
         }
     }
