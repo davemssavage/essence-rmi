@@ -26,8 +26,8 @@ import java.nio.channels.AsynchronousCloseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import org.freshvanilla.net.DataSocket;
 import org.freshvanilla.net.WireFormat;
@@ -45,10 +45,12 @@ public class RmiInvocationHandler implements InvocationHandler, Closeable {
 
     private final Factory<String, DataSocket> _factory;
     private final boolean _closeFactory;
+    private final ConcurrentMap<Method, RmiMethod> _rmiMethodMap;
 
     public RmiInvocationHandler(Factory<String, DataSocket> factory, boolean closeFactory) {
         _factory = factory;
         _closeFactory = closeFactory;
+        _rmiMethodMap = new ConcurrentHashMap<Method, RmiMethod>(31);
     }
 
     @Override
@@ -62,33 +64,40 @@ public class RmiInvocationHandler implements InvocationHandler, Closeable {
     }
 
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-        RmiInvocationHandler.RmiMethod rmiMethod = getRmiMethod(method);
-        final Class<?>[] parameterTypes = rmiMethod.parameterTypes;
-        boolean async = parameterTypes.length > 0
-                        && parameterTypes[parameterTypes.length - 1] == Callback.class;
+        RmiMethod rmiMethod = getRmiMethod(method);
+        boolean async = rmiMethod._async;
 
         if (args == null) {
             args = NO_OBJECTS;
         }
 
         int argsLength = args.length - (async ? 1 : 0);
-        final DataSocket ds = _factory.acquire(async
-                        ? "async-org.freshvanilla.rmi"
-                        : "sync-org.freshvanilla.rmi");
+        DataSocket ds = _factory.acquire(async ? "async-org.freshvanilla.rmi" : "sync-org.freshvanilla.rmi");
 
         try {
-            // write the sequence number.
-            final long sequenceNumber = async ? ds.microTimestamp() : 0;
+            final long sequenceNumber = (async ? ds.microTimestamp() : 0);
+
             if (async) {
-                Callback<?> callback = (Callback<?>)args[args.length - 1];
+                Callback<?> callback = (Callback<?>)args[argsLength];
                 ds.addCallback(sequenceNumber, callback);
+                // TODO silly: although this is needed only exactly once, it is done on
+                // each call simply because the DataSocket creates its Executor for
+                // reading async replies lazily.
+                // Should probably configure a shared Executor on the DataSocketFactory
+                // and have it inject that into all acquired() DataSockets; that would
+                // bound the number of created Executors and avoid slamming into the
+                // same synchronized block (checking for the Executor) on every call.
+                // Then should have a simple boolean hasReader() on DataSocket so that
+                // callers like this one can do it only once. Ideally the RmiCallback
+                // would be created & set by the DataSocket itself on the first call to
+                // addCallback().
                 ds.setReader(new RmiCallback(ds));
             }
 
-            final WireFormat wf = ds.wireFormat();
+            WireFormat wf = ds.wireFormat();
             ByteBuffer wb = ds.writeBuffer();
             wf.writeNum(wb, sequenceNumber);
-            wf.writeTag(wb, rmiMethod.methodName);
+            wf.writeTag(wb, rmiMethod._methodName);
             wf.writeArray(wb, argsLength, args);
             wf.flush(ds, wb);
 
@@ -103,7 +112,7 @@ public class RmiInvocationHandler implements InvocationHandler, Closeable {
             Object reply = wf.readObject(rb);
 
             if (success) {
-                return Classes.parseAs(reply, rmiMethod.returnType);
+                return Classes.parseAs(reply, rmiMethod._returnType);
             }
 
             if (reply instanceof Throwable) {
@@ -163,19 +172,19 @@ public class RmiInvocationHandler implements InvocationHandler, Closeable {
         }
     }
 
-    private final Map<Method, RmiInvocationHandler.RmiMethod> rmiMethodMap = new ConcurrentHashMap<Method, RmiInvocationHandler.RmiMethod>();
-
-    private RmiInvocationHandler.RmiMethod getRmiMethod(Method method) {
-        RmiInvocationHandler.RmiMethod ret = rmiMethodMap.get(method);
+    private RmiMethod getRmiMethod(Method method) {
+        RmiMethod ret = _rmiMethodMap.get(method);
         if (ret == null) {
-            rmiMethodMap.put(
-                method,
-                ret = new RmiInvocationHandler.RmiMethod(method.getName(), method.getReturnType(),
-                    method.getParameterTypes()));
+            ret = new RmiMethod(method.getName(), method.getReturnType(), method.getParameterTypes());
+            RmiMethod prev = _rmiMethodMap.putIfAbsent(method, ret);
+            if (prev != null) {
+                ret = prev;
+            }
         }
         return ret;
     }
 
+    // Reader for replies to async calls on a given DataSocket
     static class RmiCallback implements Callback<DataSocket> {
 
         private final DataSocket ds;
@@ -230,15 +239,19 @@ public class RmiInvocationHandler implements InvocationHandler, Closeable {
         }
     }
 
+    // Wrapper for snapshotting Method name/parameters. Not necessary except for the fact
+    // that Method.getParameterTypes() creates a new array on every call.
     static class RmiMethod {
-        public final String methodName;
-        public final Class<?> returnType;
-        public final Class<?>[] parameterTypes;
+        public final String _methodName;
+        public final Class<?> _returnType;
+        public final Class<?>[] _parameterTypes;
+        public final boolean _async;
 
         RmiMethod(String methodName, Class<?> returnType, Class<?>[] parameterTypes) {
-            this.methodName = methodName;
-            this.returnType = returnType;
-            this.parameterTypes = parameterTypes;
+            _methodName = methodName;
+            _returnType = returnType;
+            _parameterTypes = parameterTypes;
+            _async = (parameterTypes.length > 0 && parameterTypes[parameterTypes.length - 1] == Callback.class);
         }
     }
 
