@@ -118,8 +118,7 @@ public class VanillaDataSocket extends VanillaResource implements DataSocket {
 
     public void setReader(final Callback<DataSocket> reader) {
         synchronized (_executorLock) {
-            ExecutorService executor1 = _executor;
-            if (executor1 != null) {
+            if (_executor != null) {
                 return;
             }
             _executor = Executors.newCachedThreadPool(new NamedThreadFactory(getName() + "-reply-listener",
