@@ -1,5 +1,5 @@
 /*
- Copyright 2008 Peter Lawrey
+ Copyright 2008-2011 the original author or authors
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -17,19 +17,15 @@
 package org.freshvanilla.rmi;
 
 import java.io.Closeable;
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
-import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousCloseException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import org.freshvanilla.net.DataSocket;
+import org.freshvanilla.net.DataSockets;
 import org.freshvanilla.net.WireFormat;
 import org.freshvanilla.utils.Callback;
 import org.freshvanilla.utils.Classes;
@@ -117,7 +113,7 @@ public class RmiInvocationHandler implements InvocationHandler, Closeable {
 
             if (reply instanceof Throwable) {
                 Throwable t = (Throwable)reply;
-                appendStackTrace(ds, t);
+                DataSockets.appendStackTrace(ds, t);
                 throw t;
             }
 
@@ -125,44 +121,6 @@ public class RmiInvocationHandler implements InvocationHandler, Closeable {
         }
         finally {
             _factory.recycle(ds);
-        }
-    }
-
-    private static void appendStackTrace(DataSocket ds, Throwable t) {
-        try {
-            Field stackTrace = Throwable.class.getDeclaredField("stackTrace");
-            stackTrace.setAccessible(true);
-            final List<StackTraceElement> stack1 = Arrays.asList(t.getStackTrace());
-            int pos;
-
-            for (pos = stack1.size() - 1; pos > 0; pos--) {
-                if ("invoke0".equals(stack1.get(pos).getMethodName())) {
-                    break;
-                }
-            }
-
-            if (pos <= 0) {
-                pos = stack1.size() - 6;
-            }
-
-            List<StackTraceElement> stack = new ArrayList<StackTraceElement>(stack1.subList(0, pos));
-            final InetSocketAddress address = ds.getAddress();
-
-            if (address != null) {
-                String hostName = address.getHostName();
-                if ("0.0.0.0".equals(hostName)) {
-                    hostName = "localhost";
-                }
-                stack.add(new StackTraceElement("~ call to server ~", "call", hostName, address.getPort()));
-            }
-
-            Throwable t2 = new Throwable();
-            final List<StackTraceElement> stack2 = Arrays.asList(t2.getStackTrace());
-            stack.addAll(stack2.subList(3, stack2.size()));
-            stackTrace.set(t, stack.toArray(new StackTraceElement[stack.size()]));
-        }
-        catch (Exception e) {
-            throw new AssertionError(e);
         }
     }
 
