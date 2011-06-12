@@ -20,9 +20,11 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 
 public interface PojoSerializer {
+
     public <Pojo> boolean canSerialize(Pojo pojo);
 
     public <Pojo> void serialize(ByteBuffer wb, WireFormat wf, Pojo pojo) throws IOException;
 
-    public <Pojo> Pojo deserialize(ByteBuffer rb, WireFormat wf) throws IOException;
+    public <Pojo> Pojo deserialize(ByteBuffer rb, WireFormat wf) throws ClassNotFoundException, IOException;
+
 }

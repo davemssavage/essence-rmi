@@ -68,7 +68,7 @@ public class VanillaRmiServer<P> extends VanillaResource implements Factory<Data
     }
 
     public void recycle(DataSocketHandler dataSocketHandler) {
-        // TODO: why is this empty?
+        // nothing to recycle
     }
 
     public P getProvider() {
@@ -96,10 +96,14 @@ public class VanillaRmiServer<P> extends VanillaResource implements Factory<Data
         }
 
         public void close() {
-            if (!_ds.isClosed()) {
-                _ds.close();
+            try {
+                if (!_ds.isClosed()) {
+                    _ds.close();
+                }
             }
-            super.close();
+            finally {
+                super.close();
+            }
         }
 
         public void onConnection() {

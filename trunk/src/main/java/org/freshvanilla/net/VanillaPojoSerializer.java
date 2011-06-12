@@ -49,9 +49,14 @@ public class VanillaPojoSerializer implements PojoSerializer {
         }
     }
 
-    public <Pojo> Pojo deserialize(ByteBuffer rb, WireFormat wf) throws IOException {
+    public <Pojo> Pojo deserialize(ByteBuffer rb, WireFormat wf) throws ClassNotFoundException, IOException {
         String classWithParameters = (String)wf.readObject(rb);
         MetaClass<Pojo> clazz = _metaClasses.acquireMetaClass(classWithParameters);
+
+        if (clazz == null) {
+            throw new ClassNotFoundException(classWithParameters);
+        }
+
         Pojo pojo;
 
         try {

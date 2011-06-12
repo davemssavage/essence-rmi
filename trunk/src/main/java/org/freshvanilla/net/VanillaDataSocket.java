@@ -67,7 +67,7 @@ public class VanillaDataSocket extends VanillaResource implements DataSocket {
                              SocketChannel channel,
                              WireFormat wireFormat,
                              Map<String, Object> header,
-                             int maximumMessageSize) throws IOException {
+                             int maximumMessageSize) throws ClassNotFoundException, IOException {
         super(name);
         _log = getLog();
         _address = address;

@@ -128,8 +128,9 @@ public class BinaryWireFormat implements WireFormat {
 
     public int readLen(ByteBuffer readBuffer) throws StreamCorruptedException {
         long len = readNum(readBuffer);
-        if (len < 0 || len > Integer.MAX_VALUE)
+        if (len < 0 || len > Integer.MAX_VALUE) {
             throw new StreamCorruptedException("length invalid, len=" + len);
+        }
         return (int)len;
     }
 
@@ -171,11 +172,12 @@ public class BinaryWireFormat implements WireFormat {
         writeNum(writeBuffer, len);
         MetaClass<?> oClass = _metaClasses.acquireMetaClass(objects.getClass());
         writeTag(writeBuffer, oClass.getComponentType().getName());
-        for (int i = 0; i < len; i++)
+        for (int i = 0; i < len; i++) {
             writeObject(writeBuffer, objects[i]);
+        }
     }
 
-    private Object[] readArray0(ByteBuffer readBuffer) throws IOException {
+    private Object[] readArray0(ByteBuffer readBuffer) throws ClassNotFoundException, IOException {
         int len = readLen(readBuffer);
         MetaClass<?> componentType = _metaClasses.acquireMetaClass(readString(readBuffer));
         Object[] objects;
@@ -199,9 +201,12 @@ public class BinaryWireFormat implements WireFormat {
         return objects;
     }
 
-    public Object readObject(ByteBuffer readBuffer) throws IOException {
+    public Object readObject(ByteBuffer readBuffer) throws ClassNotFoundException, IOException {
         byte b = readBuffer.get();
-        if (b >= 0) return (int)b;
+        if (b >= 0) {
+            return (int)b;
+        }
+
         SpecialTag stag = asSTag(b, "object");
         switch (stag) {
             case NULL :
@@ -271,20 +276,16 @@ public class BinaryWireFormat implements WireFormat {
                 return bytes;
 
             case CLASS :
-                try {
-                    return _metaClasses.loadClass(readString(readBuffer));
-                }
-                catch (ClassNotFoundException e) {
-                    throw new NotSerializableException(e.toString());
-                }
+                return _metaClasses.loadClass(readString(readBuffer));
 
             case META_CLASS :
                 return _metaClasses.acquireMetaClass(readString(readBuffer));
         }
+
         throw new UnsupportedOperationException("Tag " + stag + " not supported.");
     }
 
-    private Map<Object, Object> readMap(ByteBuffer readBuffer) throws IOException {
+    private Map<Object, Object> readMap(ByteBuffer readBuffer) throws ClassNotFoundException, IOException {
         int len = readLen(readBuffer);
         Map<Object, Object> map = len > 0
                         ? new LinkedHashMap<Object, Object>(len * 3 / 2)
@@ -295,13 +296,13 @@ public class BinaryWireFormat implements WireFormat {
         return map;
     }
 
-    private Entry<Object, Object> readEntry(ByteBuffer readBuffer) throws IOException {
+    private Entry<Object, Object> readEntry(ByteBuffer readBuffer) throws ClassNotFoundException, IOException {
         final Object key = readObject(readBuffer);
         final Object value = readObject(readBuffer);
         return new SimpleEntry<Object, Object>(key, value);
     }
 
-    private List<Object> readList(ByteBuffer readBuffer) throws IOException {
+    private List<Object> readList(ByteBuffer readBuffer) throws ClassNotFoundException, IOException {
         int len = readLen(readBuffer);
         List<Object> list = len > 0 ? new ArrayList<Object>(len) : Collections.emptyList();
         for (int i = 0; i < len; i++) {
@@ -310,7 +311,7 @@ public class BinaryWireFormat implements WireFormat {
         return list;
     }
 
-    private Set<Object> readSet(ByteBuffer readBuffer) throws IOException {
+    private Set<Object> readSet(ByteBuffer readBuffer) throws ClassNotFoundException, IOException {
         int len = readLen(readBuffer);
         Set<Object> set = len > 0 ? new LinkedHashSet<Object>(len * 3 / 2) : Collections.emptySet();
         for (int i = 0; i < len; i++) {
@@ -319,7 +320,7 @@ public class BinaryWireFormat implements WireFormat {
         return set;
     }
 
-    public String readString(ByteBuffer readBuffer) throws IOException {
+    public String readString(ByteBuffer readBuffer) throws ClassNotFoundException, IOException {
         final Object o = readObject(readBuffer);
         if (o instanceof String) {
             return (String)o;
@@ -329,7 +330,7 @@ public class BinaryWireFormat implements WireFormat {
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
-    private Enum readEnum(ByteBuffer readBuffer) throws IOException {
+    private Enum readEnum(ByteBuffer readBuffer) throws ClassNotFoundException, IOException {
         String enumStr = readString(readBuffer);
         int pos = enumStr.indexOf(' ');
         try {
@@ -693,7 +694,7 @@ public class BinaryWireFormat implements WireFormat {
         return new String(chars, 0, len);
     }
 
-    public Object[] readArray(ByteBuffer rb) throws IOException {
+    public Object[] readArray(ByteBuffer rb) throws ClassNotFoundException, IOException {
         final Object o = readObject(rb);
         if (o instanceof Object[]) {
             return (Object[])o;
@@ -702,7 +703,8 @@ public class BinaryWireFormat implements WireFormat {
     }
 
     @SuppressWarnings("unchecked")
-    public <Pojo, T> void readField(ByteBuffer rb, MetaField<Pojo, T> field, Pojo pojo) throws IOException {
+    public <Pojo, T> void readField(ByteBuffer rb, MetaField<Pojo, T> field, Pojo pojo)
+        throws ClassNotFoundException, IOException {
         final Class<?> type = field.getType();
 
         if (field.isPrimitive()) {
