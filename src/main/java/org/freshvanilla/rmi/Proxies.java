@@ -28,7 +28,7 @@ import org.freshvanilla.utils.Factory;
 public class Proxies {
 
     public static <P> VanillaRmiServer<P> newServer(String name, int port, P provider) throws IOException {
-        return new VanillaRmiServer<P>(name, port, provider);
+        return newServer(name, port, provider, Classes.getClassLoader(provider.getClass()));
     }
 
     public static <P> VanillaRmiServer<P> newServer(String name, int port, P provider, ClassLoader classLoader)
