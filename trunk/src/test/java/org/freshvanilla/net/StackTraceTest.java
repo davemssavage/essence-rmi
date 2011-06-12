@@ -22,6 +22,7 @@ import org.freshvanilla.lang.MetaClasses;
 import org.freshvanilla.rmi.Proxies;
 import org.freshvanilla.rmi.VanillaRmiServer;
 import org.freshvanilla.test.AbstractTestCase;
+import org.freshvanilla.utils.Classes;
 import org.junit.After;
 import org.junit.Before;
 
@@ -36,7 +37,7 @@ public class StackTraceTest extends AbstractTestCase {
         _server = Proxies.newServer("server", 9876, "ServiceObject");
 
         // "client" connections
-        MetaClasses meta = new MetaClasses(ClassLoader.getSystemClassLoader());
+        MetaClasses meta = new MetaClasses(Classes.getClassLoader(getClass()));
         _dsf = new CachedDataSocketFactory("foo", "localhost:9876", 1000L, meta);
     }
 
@@ -52,7 +53,7 @@ public class StackTraceTest extends AbstractTestCase {
     }
 
     public void testResilienceToCorruptedStackTrace() throws Exception {
-        // create an exception with misisng stack frames
+        // create an exception with missing stack frames
         Exception t = new IllegalArgumentException("oopsie");
         corruptStack(t);
 
