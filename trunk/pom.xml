@@ -19,10 +19,10 @@
         <compiler.plugin.version>2.3.2</compiler.plugin.version>
         <eclipse.plugin.version>2.8</eclipse.plugin.version>
         <source.plugin.version>2.1.2</source.plugin.version>
-        <surefire.plugin.version>2.8.1</surefire.plugin.version>
+        <surefire.plugin.version>2.9</surefire.plugin.version>
         <!-- dependencies -->
         <slf4j.version>1.6.1</slf4j.version>
-        <logback.version>0.9.28</logback.version>
+        <logback.version>0.9.29</logback.version>
         <junit.version>4.8.2</junit.version>
         <!-- bundle -->
         <bundle.namespace>org.freshvanilla</bundle.namespace>
