@@ -20,6 +20,7 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.SocketException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.util.Map;
@@ -75,9 +76,17 @@ public class VanillaDataSocket extends VanillaResource implements DataSocket {
         channel.configureBlocking(true);
         Socket socket = channel.socket();
         socket.setTcpNoDelay(true);
-        socket.setTrafficClass(/* IPTOS_LOWDELAY */0x10);
         socket.setSendBufferSize(BUFFER_SIZE);
         socket.setReceiveBufferSize(BUFFER_SIZE);
+
+        try {
+            // 0x10 = IPTOS_LOWDELAY
+            socket.setTrafficClass(0x10);
+        }
+        catch (SocketException sex) {
+            // no IP_TOS for you
+        }
+
         _wireFormat = wireFormat;
         _readBuffer = allocateBuffer(maximumMessageSize);
         _writeBuffer = allocateBuffer(maximumMessageSize);
