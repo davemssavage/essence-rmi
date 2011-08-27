@@ -15,7 +15,7 @@
         <!-- globals -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <!-- plugins -->
-        <bundle.plugin.version>2.3.4</bundle.plugin.version>
+        <bundle.plugin.version>2.3.5</bundle.plugin.version>
         <compiler.plugin.version>2.3.2</compiler.plugin.version>
         <eclipse.plugin.version>2.8</eclipse.plugin.version>
         <source.plugin.version>2.1.2</source.plugin.version>
