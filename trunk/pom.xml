@@ -15,15 +15,15 @@
         <!-- globals -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <!-- plugins -->
-        <bundle.plugin.version>2.3.5</bundle.plugin.version>
+        <bundle.plugin.version>2.3.6</bundle.plugin.version>
         <compiler.plugin.version>2.3.2</compiler.plugin.version>
         <eclipse.plugin.version>2.8</eclipse.plugin.version>
         <source.plugin.version>2.1.2</source.plugin.version>
-        <surefire.plugin.version>2.9</surefire.plugin.version>
+        <surefire.plugin.version>2.12</surefire.plugin.version>
         <!-- dependencies -->
         <slf4j.version>1.6.4</slf4j.version>
         <logback.version>1.0.0</logback.version>
-        <junit.version>4.8.2</junit.version>
+        <junit.version>4.10</junit.version>
         <!-- bundle -->
         <bundle.namespace>org.freshvanilla</bundle.namespace>
     </properties>
