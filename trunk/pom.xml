@@ -11,6 +11,10 @@
     <inceptionYear>2008</inceptionYear>
     <url>http://code.google.com/p/essence-rmi/</url>
 
+	<prerequisites>
+		<maven>2.2.0</maven>
+	</prerequisites>
+
     <properties>
         <!-- globals -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
