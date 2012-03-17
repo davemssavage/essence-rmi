@@ -292,21 +292,23 @@ public class BenchmarkTest extends AbstractTestCase {
 
         }
         finally {
-            assert (server != null);
-            assertFalse(server.getProvider().byeCalled);
-
-            closeClient(service);
-
-            for (int i = 0; i < 10; i++) {
-                if (server.getProvider().byeCalled) {
-                    break;
-                }
-                Thread.sleep(50);
+            if (server == null) {
+                fail("Server is null");
             }
-
-            assertTrue(server.getProvider().byeCalled);
-
-            closeServer(server);
+            else {
+                assertFalse(server.getProvider().byeCalled);
+                closeClient(service);
+        
+                for (int i = 0; i < 10; i++) {
+                    if (server.getProvider().byeCalled) {
+                        break;
+                    }
+                    Thread.sleep(50);
+                }
+        
+                assertTrue(server.getProvider().byeCalled);
+                closeServer(server);
+            }
         }
     }
 }
