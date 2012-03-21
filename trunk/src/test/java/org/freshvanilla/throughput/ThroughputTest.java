@@ -52,7 +52,6 @@ public class ThroughputTest extends AbstractTestCase {
     }
 
     private void doEchoThroughput(String connectionString) throws InterruptedException, IOException {
-        @SuppressWarnings("unchecked")
         AsyncEchoService client = Proxies.newClient("echo-client", connectionString, AsyncEchoService.class);
         BatchingEchoClient client2 = new BatchingEchoClient(client, 64);
 
