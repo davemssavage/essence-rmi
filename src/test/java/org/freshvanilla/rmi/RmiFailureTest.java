@@ -86,7 +86,6 @@ public class RmiFailureTest extends AbstractTestCase {
 
         try {
             factory = new CachedDataSocketFactory("mx-client", "localhost:" + server.getPort(), getMetaClasses());
-            @SuppressWarnings("unchecked")
             FaultyClient client = Proxies.newClient(factory, FaultyClient.class);
 
             assertEquals(10, client.add(1, 9));
@@ -169,7 +168,6 @@ public class RmiFailureTest extends AbstractTestCase {
 
         try {
             factory = new CachedDataSocketFactory("mx-client", "localhost:" + 12345, 5000L, getMetaClasses());
-            @SuppressWarnings("unchecked")
             FaultyClient client = Proxies.newClient(factory, FaultyClient.class);
 
             try {
@@ -193,9 +191,7 @@ public class RmiFailureTest extends AbstractTestCase {
         try {
             factory = new CachedDataSocketFactory("mx-client", "localhost:54321,localhost:"
                                                                + server.getPort(), 5000L, getMetaClasses());
-            @SuppressWarnings("unchecked")
             FaultyClient client = Proxies.newClient(factory, FaultyClient.class);
-            @SuppressWarnings("unchecked")
             FaultyClient client2 = Proxies.newClient(factory, FaultyClient.class);
             int tests = isFullBuild() ? 100001 : 10001;
 
@@ -255,9 +251,7 @@ public class RmiFailureTest extends AbstractTestCase {
         try {
             factory = new CachedDataSocketFactory("mx-client", "localhost:54321,localhost:"
                                                                + server.getPort(), 5000L, getMetaClasses());
-            @SuppressWarnings("unchecked")
             FaultyClient client = Proxies.newClient(factory, FaultyClient.class);
-            @SuppressWarnings("unchecked")
             FaultyClient client2 = Proxies.newClient(factory, FaultyClient.class);
             int tests = isFullBuild() ? 5001 : 501;
 

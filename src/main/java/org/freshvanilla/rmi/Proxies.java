@@ -18,6 +18,7 @@ package org.freshvanilla.rmi;
 
 import java.io.IOException;
 import java.lang.reflect.Proxy;
+import java.util.concurrent.TimeUnit;
 
 import org.freshvanilla.lang.MetaClasses;
 import org.freshvanilla.net.CachedDataSocketFactory;
@@ -36,31 +37,34 @@ public class Proxies {
         return new VanillaRmiServer<P>(name, port, provider, classLoader);
     }
 
-    public static <I> I newClient(String name, String connectionString, Class<I>... interfaces) {
-        return newClient(name, connectionString, Classes.getClassLoader(interfaces[0]), interfaces);
+    public static <I> I newClient(String name, String connectionString, Class<I> serviceInterface) {
+        ClassLoader cl = Classes.getClassLoader(serviceInterface);
+        return newClient(name, connectionString, cl, serviceInterface);
     }
 
     public static <I> I newClient(String name,
                                   String connectionString,
                                   ClassLoader classLoader,
-                                  Class<I>... interfaces) {
+                                  Class<I> serviceInterface) {
         MetaClasses metaClasses = new MetaClasses(classLoader);
-        Factory<String, DataSocket> factory = new CachedDataSocketFactory(name, connectionString, 60 * 1000L,
-            metaClasses);
-        return newClient(factory, true, classLoader, interfaces);
+        Factory<String, DataSocket> factory = new CachedDataSocketFactory(name, connectionString,
+            TimeUnit.SECONDS.toMillis(60), metaClasses);
+        return newClient(factory, true, classLoader, serviceInterface);
     }
 
-    public static <I> I newClient(Factory<String, DataSocket> factory, Class<I>... interfaces) {
-        return newClient(factory, false, Classes.getClassLoader(interfaces[0]), interfaces);
+    public static <I> I newClient(Factory<String, DataSocket> factory, Class<I> serviceInterface) {
+        ClassLoader cl = Classes.getClassLoader(serviceInterface);
+        return newClient(factory, false, cl, serviceInterface);
     }
 
     @SuppressWarnings("unchecked")
     public static <I> I newClient(Factory<String, DataSocket> factory,
                                   boolean closeFactory,
                                   ClassLoader classLoader,
-                                  Class<I>... interfaces) {
+                                  Class<I> serviceInterface) {
+        Class<I>[] ifs = new Class[]{serviceInterface};
         RmiInvocationHandler rmiih = new RmiInvocationHandler(factory, closeFactory);
-        return (I)Proxy.newProxyInstance(classLoader, interfaces, rmiih);
+        return (I)Proxy.newProxyInstance(classLoader, ifs, rmiih);
     }
 
 }
