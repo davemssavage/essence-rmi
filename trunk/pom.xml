@@ -33,7 +33,7 @@
         <!-- dependencies -->
         <slf4j.version>1.7.2</slf4j.version>
         <logback.version>1.0.7</logback.version>
-        <junit.version>4.10</junit.version>
+        <junit.version>4.11</junit.version>
         <!-- bundle -->
         <bundle.namespace>org.freshvanilla</bundle.namespace>
     </properties>
@@ -149,7 +149,7 @@
         <!-- testing -->
         <dependency>
             <groupId>junit</groupId>
-            <artifactId>junit-dep</artifactId>
+            <artifactId>junit</artifactId>
             <version>${junit.version}</version>
             <scope>test</scope>
         </dependency>
