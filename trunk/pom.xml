@@ -31,8 +31,8 @@
         <source.plugin.version>2.2.1</source.plugin.version>
         <surefire.plugin.version>2.14</surefire.plugin.version>
         <!-- dependencies -->
-        <slf4j.version>1.7.4</slf4j.version>
-        <logback.version>1.0.10</logback.version>
+        <slf4j.version>1.7.5</slf4j.version>
+        <logback.version>1.0.11</logback.version>
         <junit.version>4.11</junit.version>
         <!-- bundle -->
         <bundle.namespace>org.freshvanilla</bundle.namespace>
