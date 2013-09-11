@@ -27,7 +27,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 
 import org.freshvanilla.rmi.Proxies;
 import org.freshvanilla.rmi.VanillaRmiServer;
@@ -78,8 +78,7 @@ public class ThroughputTest extends AbstractTestCase {
             }
         }
 
-        LOG.info(new Formatter().format("The geo-mean throughput was %,d msg/s",
-            (int)Math.pow(product, 1.0 / count)).toString());
+        LOG.info(format("The geo-mean throughput was %,d msg/s", (int)Math.pow(product, 1.0 / count)));
 
         client2.close();
         closeClient(client);
@@ -98,9 +97,8 @@ public class ThroughputTest extends AbstractTestCase {
 
         if (print) {
             long rate = messages * 1000L * 1000 * 1000 / time;
-            LOG.debug(new Formatter().format(
-                "Sync messages, size %,d, bandwidth= %4.1f MB/s, rate= %,d msg/s", messageSize,
-                messageSize * messages * 1000.0 * 1000 * 1000 / time / 1024 / 1024, rate).toString());
+            LOG.debug(format("Sync messages, size %,d, bandwidth= %4.1f MB/s, rate= %,d msg/s",
+                messageSize, messageSize * messages * 1000.0 * 1000 * 1000 / time / 1024 / 1024, rate));
             return rate;
         }
 
@@ -136,13 +134,26 @@ public class ThroughputTest extends AbstractTestCase {
 
         if (print) {
             long rate = messages * 1000L * 1000 * 1000 / time;
-            LOG.info(new Formatter().format("%s messages, size %,d, bandwidth= %4.1f MB/s, rate= %,d msg/s",
-                type, messageSize, messageSize * messages * 1000.0 * 1000 * 1000 / time / 1024 / 1024, rate)
-                .toString());
+            LOG.info(format("%s messages, size %,d, bandwidth= %4.1f MB/s, rate= %,d msg/s",
+                type, messageSize, messageSize * messages * 1000.0 * 1000 * 1000 / time / 1024 / 1024, rate));
             return rate;
         }
 
         return 1;
+    }
+    
+    private String format(String format, Object... args) {
+        String value = "";
+        Formatter f = new Formatter();
+
+        try {
+            value = f.format(format, args).toString();
+        }
+        finally {
+            f.close();
+        }
+
+        return value;
     }
 
     interface AsyncEchoService extends EchoService {
